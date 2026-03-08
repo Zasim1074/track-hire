@@ -1,0 +1,26 @@
+[
+  {
+    "question": "What is TrackHire?",
+    "answer": "TrackHire is a personal job application tracker that helps you manage and organize your job search in one place. You can log applications, track their status, set reminders, and monitor your progress throughout the hiring process."
+  },
+  {
+    "question": "Do companies post jobs on TrackHire?",
+    "answer": "No. TrackHire is not a job portal. It is a productivity tool designed for job seekers to track applications they have already applied to across different platforms."
+  },
+  {
+    "question": "How do I add a new job application?",
+    "answer": "After logging in, go to your dashboard and click the 'Add Job' button. Enter the company name, role, application date, status, and any notes to start tracking the application."
+  },
+  {
+    "question": "What statuses can I track?",
+    "answer": "You can categorize applications as Applied, Interviewing, Offer, Rejected, or customize statuses based on your workflow. This helps you clearly see where you stand in your job search."
+  },
+  {
+    "question": "Can I update the status later?",
+    "answer": "Yes. You can edit any application at any time and update its status as you move through the hiring process."
+  },
+  {
+    "question": "Is my data secure?",
+    "answer": "Yes. TrackHire uses secure authentication and a protected database to ensure your job tracking data remains private and accessible only to you."
+  }
+]
