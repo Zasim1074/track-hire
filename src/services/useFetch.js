@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSession } from "@clerk/clerk-react";
+import supabaseClient from "@/utils/supabase";
 
 export const useFetch = (cb, options = {}) => {
   const [data, setData] = useState(undefined);
@@ -8,21 +9,26 @@ export const useFetch = (cb, options = {}) => {
 
   const { session, isLoaded } = useSession();
 
-  const fn = async (...args) => {
-    if (!session || !isLoaded) return;
+  const fn = async (newOptions = {}) => {
+    if (!isLoaded) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const supabaseAccessToken = await session.getToken({
-        template: "supabase",
-      });
+      let token = null;
 
-      const response = await cb(supabaseAccessToken, options, ...args);
+      if (session) {
+        token = await session.getToken({ template: "supabase" });
+      }
+
+      const supabase = supabaseClient(token);
+
+      const response = await cb(supabase, { ...options, ...newOptions });
       setData(response);
     } catch (err) {
       setError(err);
+      console.error(err);
     } finally {
       setLoading(false);
     }

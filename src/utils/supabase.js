@@ -3,11 +3,18 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
-const supabaseClient = async (supabaseAccessToken) => {
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    gloabal: { headers: { Authorization: `Bearer ${supabaseAccessToken}` } },
+const supabaseClient = (token) => {
+  if (!token) {
+    return createClient(supabaseUrl, supabaseKey);
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    global: { 
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
   });
-  return supabase;
 };
 
 export default supabaseClient;

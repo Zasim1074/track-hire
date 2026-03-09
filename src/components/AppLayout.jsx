@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Header from "../components/Header";
+import Header from "./Header";
 import { Protect } from "@clerk/clerk-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 

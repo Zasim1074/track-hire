@@ -32,12 +32,12 @@ const Header = () => {
 
   return (
     <div>
-      <nav className="py-4 flex justify-between items-center">
+      <nav className="py-2 flex justify-between items-center">
         <Link to="/">
           <img
             src={darkLogo}
             alt="nav-logo"
-            className="h-20 bg-transparent rounded-xl"
+            className="h-12 bg-transparent rounded-xl"
           />
         </Link>
 
@@ -55,20 +55,19 @@ const Header = () => {
                   Post a Job
                 </Button>
               </Link>
-            )}{
-
-            }
+            )}
+            {}
 
             <UserButton appearance={{ elements: { avatarBox: "w-10 h-10" } }}>
               <UserButton.MenuItems>
                 <UserButton.Link
                   label="My Jobs"
-                  labelIcon={<BriefcaseBusiness size={15} />}
+                  labelIcon={<BriefcaseBusiness size={12} />}
                   href="/my-jobs"
                 />
                 <UserButton.Link
                   label="Saved Jobs"
-                  labelIcon={<Heart size={15} />}
+                  labelIcon={<Heart size={12} />}
                   href="/saved-jobs"
                 />
               </UserButton.MenuItems>
@@ -88,6 +87,8 @@ const Header = () => {
           />
         </div>
       )}
+
+      <hr className="pt-5"/>
     </div>
   );
 };

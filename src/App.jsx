@@ -3,7 +3,7 @@ import "./App.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { BarLoader } from "react-spinners";
-const AppLayout = lazy(() => import("./layout/AppLayout"));
+const AppLayout = lazy(() => import("./components/AppLayout"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const JobListing = lazy(() => import("./pages/JobListing"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
@@ -21,7 +21,7 @@ const router = createBrowserRouter([
       // Public Routes
       { path: "/", element: <LandingPage /> },
       { path: "/jobs", element: <JobListing /> },
-      { path: "/job/:id", element: <Job /> },
+      { path: "/jobs/:id", element: <Job /> },
 
       // Protected Routes
       {
