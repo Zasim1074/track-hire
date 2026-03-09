@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/select";
 import { getHiringStatus, getSingleJob } from "@/services/apiJobs";
 import { useFetch } from "@/services/useFetch";
-import { ClerkLoading, useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
 import MDEditor from "@uiw/react-md-editor";
 import { Briefcase, DoorClosed, DoorOpen, MapPinIcon } from "lucide-react";
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { BarLoader } from "react-spinners";
+import ApplyJobDrawer from "@/components/ApplyJobDrawer";
 
 const Job = () => {
   const { user, isLoaded } = useUser();
@@ -77,7 +78,16 @@ const Job = () => {
 
             {dataJob?.recruiter_id !== user?.id && (
               <div className="flex gap-2">
-                {dataJob?.isOpen ? <DoorOpen /> : <DoorClosed />}
+                {dataJob?.isOpen ? (
+                  <div className="flex felx-row">
+                    <DoorOpen className="mr-2" />
+                    <p>Currently Hiring</p>
+                  </div>
+                ) : (
+                  <div className="flex felx-row">
+                    <DoorClosed className="mr-2" /> <p>Hiring Closed</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -124,6 +134,18 @@ const Job = () => {
           </div>
 
           {/* Application -> Recruiter */}
+
+          {dataJob?.recruiter_id !== user.id && (
+            <ApplyJobDrawer
+              className="w-full items-center"
+              dataJob={dataJob}
+              user={user}
+              fetchJob={fnJob}
+              applied={dataJob?.applications?.find(
+                (appli) => appli.candidate_id === user.id,
+              )}
+            />
+          )}
         </div>
       )}
     </>

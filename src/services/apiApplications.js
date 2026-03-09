@@ -1,30 +1,27 @@
-export const applyToJob = async (supabase, { location, company, searchQuery }) => {
+import { supabaseUrl } from "@/utils/supabase";
 
+export const applyToJob = async (supabase, _, jobData) => {
+  const random = Math.floor(Math.random() * 99999);
+  const filename = `resume_${random}_${jobData.candidate_id}`;
 
-    const random = Math.floor(Math.random() * 99999);
-    const filename= `resume_${random}_${jobData.candidate_id}`
+  const { error: errorStorage } = await supabase.storage
+    .from("comapnies")
+    .upload(filename, jobData.resume);
 
-
-
-  let query = supabase
-    .from("jobs")
-    .select("*, company:companies(name, logo_url), saved: saved_jobs(id)");
-
-  if (location) {
-    query = query.eq("location", location);
-  }
-  if (company) {
-    query = query.eq("company", company);
-  }
-  if (searchQuery) {
-    query = query.ilike("title", `%${searchQuery}%`);
+  if (errorStorage) {
+    console.error("Error fetching jobs:", errorStorage);
+    throw error;
   }
 
-  const { data, error } = await query;
+  const resume = `${supabaseUrl}/storage/v1/object/public/resumes/${filename}`;
+
+  const { data, error } = await supabase
+    .from("applications")
+    .insert([{ ...jobData, resume }])
+    .select();
 
   if (error) {
-    console.error("Error fetching jobs:", error);
-    throw error;
+    console.log(`Error submitting appplication : ${error}`);
   }
 
   return data;
