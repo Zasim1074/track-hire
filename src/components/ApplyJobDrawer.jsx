@@ -4,7 +4,6 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -16,6 +15,8 @@ import { Label } from "./ui/label";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useFetch } from "@/services/useFetch";
+import { applyToJob } from "@/services/apiApplications";
 
 const schema = z.object({
   experience: z
@@ -41,15 +42,29 @@ const schema = z.object({
 
     return allowed.includes(file.type);
   }, "Only PDF or DOC/DOCX allowed"),
-  location: z.enum(["moved", "moving", "no-move"], {
-    message: "Please select your location preference",
-  }),
+  location: z.enum(
+    [
+      "I'm already there",
+      "Not there, but moving to / will relocate if hired",
+      "I am not comfortable with this location.",
+    ],
+    {
+      message: "Please select your location preference",
+    },
+  ),
   terms: z.boolean().refine((val) => val === true, {
     message: "You must accept the terms",
   }),
 });
 
 const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
+  const [open, setOpen] = React.useState(false);
+  const {
+    loading: loadingApply,
+    error: errorApply,
+    fn: fnApply,
+  } = useFetch(applyToJob);
+
   const {
     register,
     handleSubmit,
@@ -64,10 +79,22 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
   const onSubmit = (formData) => {
     console.log("Form Data:", formData);
     // TODO: Submit application with formData
+    fnApply({
+      ...formData,
+      job_id: dataJob.id,
+      candidate_id: user.id,
+      name: user.fullName,
+      status: "applied",
+      resume: formData?.resume[0],
+    }).then(() => {
+      fetchJob();
+      reset();
+      setOpen(false);
+    });
   };
 
   return (
-    <Drawer open={applied ? false : undefined}>
+    <Drawer open={applied ? false : undefined} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button
           size="lg"
@@ -83,7 +110,7 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
           <DrawerTitle>
             Apply for {dataJob?.title} at {dataJob?.company?.name}
           </DrawerTitle>
-          <DrawerDescription>Please the fill the form below:</DrawerDescription>
+          <DrawerDescription>Please fill the form below</DrawerDescription>
         </DrawerHeader>
         {/* =============== Form Start ========================= */}
         <div className="max-h-[80vh] overflow-y-auto pr-2">
@@ -94,7 +121,6 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
             <div className="flex flex-col gap-1">
               <Input
                 {...register("experience", { valueAsNumber: true })}
-                name="experience"
                 type="number"
                 placeholder="years of experience"
                 className="flex-1 py-2"
@@ -125,7 +151,11 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
                 name="education"
                 control={control}
                 render={({ field }) => (
-                  <RadioGroup {...field} className="pl-2">
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="pl-2"
+                  >
                     <div className="flex items-center gap-3">
                       <RadioGroupItem value="diploma" id="diploma" />
                       <Label htmlFor="diploma">Diploma</Label>
@@ -180,21 +210,38 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
                 name="location"
                 control={control}
                 render={({ field }) => (
-                  <RadioGroup {...field} className="pl-2">
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="pl-2"
+                  >
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="moved" id="moved" />
-                      <Label htmlFor="moved">I'm already there</Label>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <RadioGroupItem value="moving" id="moving" />
-                      <Label htmlFor="moving">
-                        Not there, but moving to/will relocate, if got hired.
+                      <RadioGroupItem
+                        value="I'm already there"
+                        id="I'm already there"
+                      />
+                      <Label htmlFor="I'm already there">
+                        I'm already there
                       </Label>
                     </div>
+
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="no-move" id="no-move" />
-                      <Label htmlFor="no-move">
-                        I am not comfortable with this location.
+                      <RadioGroupItem
+                        value="Not there, but moving to / will relocate if hired"
+                        id="Not there, but moving to / will relocate if hired"
+                      />
+                      <Label htmlFor="Not there, but moving to / will relocate if hired">
+                        Not there, but moving to / will relocate if hired
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <RadioGroupItem
+                        value="I am not comfortable with this location"
+                        id="I am not comfortable with this location"
+                      />
+                      <Label htmlFor="I am not comfortable with this location">
+                        I am not comfortable with this location
                       </Label>
                     </div>
                   </RadioGroup>
@@ -215,12 +262,9 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
                   id="terms"
                   className="bg-tranparent h-5 w-5 hover:cursor-pointer"
                 />
-                <label
-                  htmlFor="terms"
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
+                <Label htmlFor="terms">
                   I accept all the information provided above is correct.
-                </label>
+                </Label>
               </div>
               {errors.terms && (
                 <p className="text-sm text-red-500">{errors.terms.message}</p>
@@ -233,14 +277,13 @@ const ApplyJobDrawer = ({ dataJob, user, fetchJob, applied = false }) => {
                 className="w-full"
                 size="lg"
                 variant={dataJob.isOpen ? "blue" : "destructive"}
-                disabled={!dataJob?.isOpen || applied}
+                disabled={loadingApply || !dataJob?.isOpen || applied}
               >
-                {dataJob.isOpen
-                  ? applied
-                    ? "Applied"
-                    : "Apply"
-                  : "Hiring Closed"}
+                {loadingApply ? "Submitting..." : applied ? "Applied" : "Apply"}
               </Button>
+              {errorApply?.message && (
+                <p className="text-sm text-red-500">{errorApply?.message}</p>
+              )}
 
               <DrawerClose asChild>
                 <Button className="w-full" size="lg" variant="outline">

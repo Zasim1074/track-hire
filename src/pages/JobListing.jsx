@@ -101,7 +101,7 @@ const JobListing = () => {
         Latest Jobs
       </h1>
 
-      {/* Add Filter here */}
+      {/* Filters */}
       <form
         onSubmit={handleSubmit}
         className="h-10 flex flex-1 w-full gap-4 items-center mb-5"

@@ -16,12 +16,11 @@ const Job = lazy(() => import("./pages/Job"));
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
-    errorElement: <div>404 Page not found</div>,
+    errorElement: <div className="flex justify-center items-center w-full h-[100vh] text-3xl">Something went wrong 🥺</div>,
     children: [
       // Public Routes
       { path: "/", element: <LandingPage /> },
       { path: "/jobs", element: <JobListing /> },
-      { path: "/jobs/:id", element: <Job /> },
 
       // Protected Routes
       {
@@ -31,6 +30,7 @@ const router = createBrowserRouter([
             path: "/on-boarding",
             element: <OnBoarding />,
           },
+          { path: "/jobs/:id", element: <Job /> },
           { path: "/post-job", element: <PostJob /> },
           { path: "/saved-jobs", element: <SavedJobs /> },
           { path: "/my-jobs", element: <MyJobs /> },
@@ -42,7 +42,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Suspense fallback={<BarLoader className="mb-4" width={"100%"} color="#85D055" />}>
+      <Suspense
+        fallback={<BarLoader className="mb-4" width={"100%"} color="#85D055" />}
+      >
         <RouterProvider router={router} />
       </Suspense>
     </ThemeProvider>

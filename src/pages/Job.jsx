@@ -15,6 +15,7 @@ import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { BarLoader } from "react-spinners";
 import ApplyJobDrawer from "@/components/ApplyJobDrawer";
+import ApplicationCard from "@/components/ApplicationCard";
 
 const Job = () => {
   const { user, isLoaded } = useUser();
@@ -40,7 +41,7 @@ const Job = () => {
 
   const handleStatusChange = (value) => {
     const isOpen = value === "open";
-    fnHiringStatus(isOpen).then(() => fnJob());
+    fnHiringStatus({ isOpen }).then(() => fnJob());
   };
 
   // =================================== UI ==========================================
@@ -145,6 +146,24 @@ const Job = () => {
                 (appli) => appli.candidate_id === user.id,
               )}
             />
+          )}
+
+          {dataJob?.recruiter_id === user.id && (
+            <div className="flex flex-col gap-2">
+              <h2 className="text-2xl sm:text-3xl font-bold pb-2">
+                Applications
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {dataJob?.applications?.length > 0 ? (
+                  dataJob.applications.map((appli) => (
+                    <ApplicationCard key={appli.id} application={appli} />
+                  ))
+                ) : (
+                  <p>No applications yet</p>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}

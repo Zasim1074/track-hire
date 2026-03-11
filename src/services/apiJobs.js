@@ -23,27 +23,30 @@ export const getJobs = async (supabase, { location, company, searchQuery }) => {
   return data;
 };
 
-export const getSavedJobs = async (supabase, { alreadySaved }, saveData) => {
+export const getSavedJobs = async (
+  supabase,
+  { alreadySaved, user_id, job_id },
+) => {
   if (alreadySaved) {
     const { data, error: deleteError } = await supabase
       .from("saved_jobs")
       .delete()
-      .eq("job_id", saveData.job_id);
+      .eq("job_id", job_id);
 
     if (deleteError) {
       console.error(`Error while deleting job : ${deleteError}`);
-      return null;
+      throw deleteError;
     }
     return data;
   } else {
     const { data, error: insertError } = await supabase
       .from("saved_jobs")
-      .insert([saveData])
+      .insert([{ user_id, job_id }])
       .select();
 
     if (insertError) {
-      console.error(`Error while saving job : ${insertError}`);
-      return null;
+      console.error(`Error while saving/removing job : ${insertError}`);
+      throw insertError;
     }
     return data;
   }
@@ -65,16 +68,60 @@ export const getSingleJob = async (supabase, { job_id }) => {
   return data;
 };
 
-export const getHiringStatus = async (supabase, { job_id }, isOpen) => {
-  const { data, error: jobError } = await supabase
+export const getHiringStatus = async (supabase, { job_id, isOpen }) => {
+  const { data, error } = await supabase
     .from("jobs")
     .update({ isOpen })
     .eq("id", job_id)
+    .select() // REQUIRED
     .single();
 
-  if (jobError) {
-    console.error(`Error while updating job : ${jobError}`);
-    return null;
+  if (error) {
+    console.error("Error while updating hiring status:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const postNewJob = async (supabase, dataJob) => {
+  console.log(`DATA RECIEVED: ${dataJob}`);
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .insert([dataJob])
+    .select();
+
+  if (error) {
+    console.error("Error while posting job:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const fetchSavedJobs = async (supabase) => {
+  const { data, error } = await supabase
+    .from("saved_jobs")
+    .select("*, job:jobs(*, company:companies(name, logo_url))");
+
+  if (error) {
+    console.error(`Error while fetching saved job : ${error}`);
+    throw error;
+  }
+  return data;
+};
+
+export const deleteJob = async (supabase, { job_id }) => {
+  const { data, error } = await supabase
+    .from("jobs")
+    .delete()
+    .eq("id", job_id)
+    .select();
+
+  if (error) {
+    console.error(`Error while deleting job : ${error}`);
+    throw error;
   }
   return data;
 };
