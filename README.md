@@ -1,16 +1,164 @@
-# React + Vite
+## TrackHire 🚀
+TrackHire is a modern job board and job tracking platform built with a scalable frontend architecture.
+It allows users to explore job opportunities, save jobs, and manage applications while enabling recruiters to post and manage job listings.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The project demonstrates production-ready frontend architecture, secure authentication, protected routing, and backend integration.
 
-Currently, two official plugins are available:
+## 🌐 Live Application
+Preview - https://track-hire-jaseem-dev.vercel.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🧠 System Architecture
+Client (React + Vite)
+        │
+        │ Authentication
+        ▼
+Clerk Auth Service
+        │
+        │ Session + User Metadata
+        ▼
+Frontend Application
+        │
+        │ API Queries
+        ▼
+Supabase (Database + APIs)
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Flow
+    User signs in using Clerk authentication
+    Clerk generates a secure session token
+    React app reads session using useUser()
+    User role stored in Clerk metadata
+    Application queries Supabase for job data
+    Protected routes restrict access to authenticated users
 
-## Expanding the ESLint configuration
+## ✨ Features
+    Authentication
+    Secure authentication using Clerk
+    Persistent sessions
+    Modal-based sign in / sign up
+    Role-based onboarding
+    Job Discovery
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# Users can:
+    Browse job listings
+    View job details
+    Explore opportunities across companies
+    Job Management
+
+# Users can:
+    Save jobs
+    Track job opportunities
+    Access personalized job lists
+    Recruiter Features
+
+# Recruiters can:
+    Post job listings
+    Manage job posts
+    View applications
+    Protected Routes
+
+# Custom ProtectedRoute ensures:
+    Only authenticated users access private pages
+    Role onboarding is completed before accessing features
+    Performance Optimizations
+    The project implements several frontend performance techniques:
+    Code Splitting
+    Pages are lazy-loaded using:
+    React.lazy()
+    Suspense
+    This reduces initial bundle size and improves load performance.
+    Loading States
+
+# Implemented using:
+    react-spinners
+    This ensures smooth UI feedback during async operations.
+    Route-level Lazy Loading
+    All major pages are loaded dynamically to optimize rendering.
+
+### 🧰 Tech Stack
+    Frontend
+    React
+    React Router
+    Tailwind CSS
+    Vite
+    Authentication
+    Clerk
+    Backend
+    Supabase
+    Deployment
+    Vercel
+
+## 📂 Project Structure
+
+src
+│
+├── components
+│   ├── AppLayout
+│   ├── ProtectedRoute
+│   ├── UI Components
+│
+├── pages
+│   ├── LandingPage
+│   ├── JobListing
+│   ├── Job
+│   ├── SavedJobs
+│   ├── MyJobs
+│   ├── PostJob
+│   └── OnBoarding
+│
+├── hooks
+├── utils
+└── main.jsx
+
+## 🔐 Environment Variables
+# Create .env file.
+    VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_key
+
+## 🛠 Installation
+    Clone repository
+    git clone https://github.com/yourusername/trackhire.git
+    Navigate to project
+    cd trackhire
+    Install dependencies
+    npm install
+    Run development server
+    npm run dev
+
+## 🚀 Deployment
+    Deployment is handled via Vercel.
+    Steps:
+        Push project to GitHub
+        Import repository in Vercel
+        Add environment variables
+        Deploy
+
+## 📸 Screenshots
+# Add screenshots of:
+    Landing page
+    Job listing
+    Job details
+    Recruiter dashboard
+    This helps recruiters visually understand the project quickly.
+
+## 📈 Future Improvements
+    Planned improvements include:
+    Resume upload system
+    Job application tracking
+    Search and filters
+    Real-time notifications
+    Admin dashboard
+    AI-based job recommendations
+
+## 👨‍💻 Author
+# Jaseem Quraishi
+
+# Portfolio
+    https://jaseem-codes.vercel.app
+
+# LinkedIn
+    https://www.linkedin.com/in/jaseem-quraishi/
+
+# GitHub
+    https://github.com/jaseem-quraishi
