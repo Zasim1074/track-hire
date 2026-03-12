@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import "./App.css";
-import {  createHashRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { BarLoader } from "react-spinners";
 const AppLayout = lazy(() => import("./components/AppLayout"));
@@ -13,7 +13,7 @@ const SavedJobs = lazy(() => import("./pages/SavedJobs"));
 const MyJobs = lazy(() => import("./pages/MyJobs"));
 const Job = lazy(() => import("./pages/Job"));
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     element: <AppLayout />,
     errorElement: <div className="flex justify-center items-center w-full h-[100vh] text-3xl">Something went wrong 🥺</div>,
