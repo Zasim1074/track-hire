@@ -5,7 +5,7 @@ It allows users to explore job opportunities, save jobs, and manage applications
 The project demonstrates production-ready frontend architecture, secure authentication, protected routing, and backend integration.
 
 ## 🌐 Live Application
-Preview - https://track-hire-jaseem-dev.vercel.app/
+Preview - https://track-hire-jq.vercel.app/
 
 ## 🧠 System Architecture
 Client (React + Vite)
