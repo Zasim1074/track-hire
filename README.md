@@ -157,8 +157,8 @@ src
 # Portfolio
     https://jaseem-codes.vercel.app
 
-# LinkedIn
+# LinkedIn 
     https://www.linkedin.com/in/jaseem-quraishi/
 
 # GitHub
-    https://github.com/jaseem-quraishi
+    https://github.com/zasim1074
