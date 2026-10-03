@@ -39,6 +39,13 @@ class JobUpdate(BaseModel):
     is_active: bool
 
 
+class JobCompanySummary(BaseModel):
+    name: str
+    logo_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class JobResponse(BaseModel):
     id: uuid.UUID
     title: str
@@ -57,6 +64,7 @@ class JobResponse(BaseModel):
     is_active: bool
 
     company_id: uuid.UUID
+    company: JobCompanySummary | None = None
     created_by: uuid.UUID
     created_at: datetime
     updated_at: datetime

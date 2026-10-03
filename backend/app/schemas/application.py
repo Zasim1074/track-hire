@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.models.application import ApplicationStatus
+from app.schemas.candidate_profile import CandidateProfileResponse
 
 
 class ApplicationCreate(BaseModel):
@@ -32,6 +33,30 @@ class ApplicationResponse(BaseModel):
 
 class ApplicationListResponse(BaseModel):
     items: list[ApplicationResponse]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+
+
+class ApplicantReview(BaseModel):
+    id: uuid.UUID
+    job_id: uuid.UUID
+    candidate_id: uuid.UUID
+    resume_id: uuid.UUID
+    cover_letter: str | None
+    status: ApplicationStatus
+    recruiter_notes: str | None
+    applied_at: datetime
+    updated_at: datetime
+    candidate_name: str
+    candidate_email: str
+    profile: CandidateProfileResponse | None
+    resume_file_name: str
+
+
+class ApplicantReviewListResponse(BaseModel):
+    items: list[ApplicantReview]
     page: int
     page_size: int
     total: int

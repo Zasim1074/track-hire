@@ -7,11 +7,13 @@ const AppLayout = lazy(() => import("./components/AppLayout"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const JobListing = lazy(() => import("./pages/JobListing"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
-const OnBoarding = lazy(() => import("./pages/OnBoarding"));
 const PostJob = lazy(() => import("./pages/PostJob"));
 const SavedJobs = lazy(() => import("./pages/SavedJobs"));
 const MyJobs = lazy(() => import("./pages/MyJobs"));
 const Job = lazy(() => import("./pages/Job"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const CandidateProfilePage = lazy(() => import("./pages/CandidateProfilePage"));
+const ResumesPage = lazy(() => import("./pages/ResumesPage"));
 
 const router = createBrowserRouter([
   {
@@ -21,19 +23,19 @@ const router = createBrowserRouter([
       // Public Routes
       { path: "/", element: <LandingPage /> },
       { path: "/jobs", element: <JobListing /> },
+      { path: "/login", element: <AuthPage mode="login" /> },
+      { path: "/register", element: <AuthPage mode="register" /> },
 
       // Protected Routes
       {
         element: <ProtectedRoute />,
         children: [
-          {
-            path: "/on-boarding",
-            element: <OnBoarding />,
-          },
           { path: "/jobs/:id", element: <Job /> },
           { path: "/post-job", element: <PostJob /> },
           { path: "/saved-jobs", element: <SavedJobs /> },
           { path: "/my-jobs", element: <MyJobs /> },
+          { path: "/profile", element: <CandidateProfilePage /> },
+          { path: "/resumes", element: <ResumesPage /> },
         ],
       },
     ],

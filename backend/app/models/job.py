@@ -57,7 +57,7 @@ class Job(Base):
     employment_type:Mapped[EmploymentType] = mapped_column(SQLEnum(EmploymentType, name="employment_type"), nullable=False)
     experience_level: Mapped[ExperienceLevel] = mapped_column(SQLEnum(ExperienceLevel, name="experience_level"), nullable=False)
     min_experience: Mapped[int | None] = mapped_column(Integer, nullable=False)
-    max_experience: Mapped[int | None] = mapped_column(Integer, nullable=False)
+    max_experience: Mapped[int | None] = mapped_column(Integer, nullable=True)
     min_salary: Mapped[int | None] = mapped_column(Integer, nullable=True)
     max_salary: Mapped[int | None] = mapped_column(Integer, nullable=True)
     

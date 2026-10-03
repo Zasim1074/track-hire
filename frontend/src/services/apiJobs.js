@@ -1,127 +1,26 @@
-export const getJobs = async (supabase, { location, company, searchQuery }) => {
-  let query = supabase
-    .from("jobs")
-    .select("*, company:companies(name, logo_url), saved: saved_jobs(id)");
+import { apiRequest } from "./apiClient";
 
-  if (location) {
-    query = query.eq("location", location);
+export async function getJobs({ location, company, searchQuery } = {}) {
+  const params = new URLSearchParams({ page: "1", page_size: "100", status: "published" });
+  if (searchQuery) params.set("search", searchQuery);
+  // Location and company filters are not part of GET /api/jobs; apply them client-side.
+  let result = await apiRequest(`/api/jobs?${params}`);
+  const jobs = [...(result.items || [])];
+  for (let page = 2; page <= result.total_pages; page += 1) {
+    params.set("page", String(page));
+    result = await apiRequest(`/api/jobs?${params}`);
+    jobs.push(...(result.items || []));
   }
-  if (company) {
-    query = query.eq("company_id", company);
-  }
-  if (searchQuery) {
-    query = query.ilike("title", `%${searchQuery}%`);
-  }
+  return jobs.filter((job) =>
+    (!company || String(job.company_id) === String(company)) &&
+    (!location || job.location?.toLowerCase() === location.toLowerCase())
+  );
+}
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching jobs:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-export const getSavedJobs = async (
-  supabase,
-  { alreadySaved, user_id, job_id },
-) => {
-  if (alreadySaved) {
-    const { data, error: deleteError } = await supabase
-      .from("saved_jobs")
-      .delete()
-      .eq("job_id", job_id);
-
-    if (deleteError) {
-      console.error(`Error while deleting job : ${deleteError}`);
-      throw deleteError;
-    }
-    return data;
-  } else {
-    const { data, error: insertError } = await supabase
-      .from("saved_jobs")
-      .insert([{ user_id, job_id }])
-      .select();
-
-    if (insertError) {
-      console.error(`Error while saving/removing job : ${insertError}`);
-      throw insertError;
-    }
-    return data;
-  }
-};
-
-export const getSingleJob = async (supabase, { job_id }) => {
-  const { data, error: jobError } = await supabase
-    .from("jobs")
-    .select(
-      "*, company:companies(name, logo_url), applications:applications(*)",
-    )
-    .eq("id", job_id)
-    .single();
-
-  if (jobError) {
-    console.error(`Error while fetching job : ${jobError}`);
-    return null;
-  }
-  return data;
-};
-
-export const getHiringStatus = async (supabase, { job_id, isOpen }) => {
-  const { data, error } = await supabase
-    .from("jobs")
-    .update({ isOpen })
-    .eq("id", job_id)
-    .select() // REQUIRED
-    .single();
-
-  if (error) {
-    console.error("Error while updating hiring status:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-export const postNewJob = async (supabase, dataJob) => {
-  console.log(`DATA RECIEVED: ${dataJob}`);
-
-  const { data, error } = await supabase
-    .from("jobs")
-    .insert([dataJob])
-    .select();
-
-  if (error) {
-    console.error("Error while posting job:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-export const fetchSavedJobs = async (supabase) => {
-  const { data, error } = await supabase
-    .from("saved_jobs")
-    .select("*, job:jobs(*, company:companies(name, logo_url))");
-
-  if (error) {
-    console.error(`Error while fetching saved job : ${error}`);
-    throw error;
-  }
-  return data;
-};
-
-export const deleteJob = async (supabase, { job_id }) => {
-  const { data, error } = await supabase
-    .from("jobs")
-    .delete()
-    .eq("id", job_id)
-    .select();
-
-  if (error) {
-    console.error(`Error while deleting job : ${error}`);
-    throw error;
-  }
-  return data;
-};
+export const getSingleJob = ({ job_id }) => apiRequest(`/api/jobs/${job_id}`);
+export const getHiringStatus = ({ job_id, isOpen }) => apiRequest(`/api/jobs/${job_id}/${isOpen ? "publish" : "close"}`, { method: "POST", auth: true });
+export const postNewJob = (payload) => apiRequest("/api/jobs", { method: "POST", body: payload, auth: true });
+export const deleteJob = ({ job_id }) => apiRequest(`/api/jobs/${job_id}`, { method: "DELETE", auth: true });
+export const updateJob = ({ job_id, ...payload }) => apiRequest(`/api/jobs/${job_id}`, { method: "PATCH", body: payload, auth: true });
+export const fetchSavedJobs = () => apiRequest("/api/saved-jobs/", { auth: true });
+export const getSavedJobs = ({ job_id, alreadySaved }) => apiRequest(`/api/saved-jobs/${job_id}`, { method: alreadySaved ? "DELETE" : "POST", auth: true });

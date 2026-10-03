@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import (
     ForbiddenError,
     InvalidResumeFileError,
+    ResumeInUseError,
     ResumeNotFoundError,
 )
 from app.core.storage import save_resume
@@ -17,9 +18,11 @@ from app.repositories.resume_repository import (
     delete,
     get_by_candidate,
     get_by_id,
+    is_attached_to_application,
     set_default,
 )
 from app.schemas.resume import ResumeResponse
+from app.core.storage import UPLOAD_DIR
 
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
 MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -75,6 +78,18 @@ def get_resume(db: Session, resume_id:UUID, current_user: User) -> ResumeRespons
     return ResumeResponse.model_validate(resume)
 
 
+def get_resume_path(db: Session, resume_id: UUID, current_user: User) -> tuple[Path, str]:
+    resume = get_by_id(db, resume_id)
+    if resume is None:
+        raise ResumeNotFoundError
+    if current_user.role != UserRole.ADMIN and resume.candidate_id != current_user.id:
+        raise ForbiddenError
+    path = Path(resume.file_url).resolve()
+    if not path.is_relative_to(UPLOAD_DIR.resolve()) or not path.is_file():
+        raise ResumeNotFoundError
+    return path, resume.file_name
+
+
 def delete_resume(db: Session, resume_id: UUID, current_user: User ) -> None:
     resume = get_by_id(db, resume_id)
 
@@ -83,6 +98,9 @@ def delete_resume(db: Session, resume_id: UUID, current_user: User ) -> None:
 
     if current_user.role != UserRole.ADMIN and resume.candidate_id != current_user.id:
         raise ForbiddenError
+
+    if is_attached_to_application(db, resume_id):
+        raise ResumeInUseError
 
     delete(db, resume)
 

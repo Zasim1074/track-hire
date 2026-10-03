@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from typing import Literal
+from app.models.user import UserRole
 
 from app.schemas.user import UserResponse
 
@@ -8,6 +10,7 @@ class RegisterRequest(BaseModel):
     password: str
     first_name: str
     last_name: str
+    role: Literal[UserRole.CANDIDATE, UserRole.HR] = UserRole.CANDIDATE
 
 class RegisterResponse(BaseModel):
     detail: str

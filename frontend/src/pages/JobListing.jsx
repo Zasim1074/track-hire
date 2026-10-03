@@ -1,7 +1,6 @@
 import Jobcard from "@/components/Jobcard";
 import { getJobs } from "@/services/apiJobs";
-import { useUser } from "@clerk/clerk-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BarLoader } from "react-spinners";
 import { getCompanies } from "@/services/apiCompanies";
 import { Input } from "@/components/ui/input";
@@ -17,11 +16,9 @@ import {
 import { useFetch } from "@/services/useFetch";
 
 const JobListing = () => {
-  const { isLoaded } = useUser();
   const [location, setLocation] = useState("");
   const [company, setCompany] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [uniqueLocations, setUniqueLocations] = useState([]);
 
   const {
     fn: fnJobs,
@@ -33,50 +30,38 @@ const JobListing = () => {
   const {
     fn: fnAllJobs,
     data: dataAllJobs,
-    loading: loadingAllJobs,
-    error: errorAllJobs,
   } = useFetch(getJobs);
 
   const {
     fn: fnCompanies,
     data: dataCompanies,
     loading: loadingCompanies,
-    error: errorCompanies,
   } = useFetch(getCompanies);
 
   useEffect(() => {
-    if (!isLoaded) return;
-
     fnAllJobs({
       location: "",
       company: "",
       searchQuery: "",
-    });
-  }, [isLoaded]);
+    }).catch(() => {});
+  }, [fnAllJobs]);
 
   useEffect(() => {
-    if (!isLoaded) return;
-
     fnJobs({
       location,
       company,
       searchQuery,
-    });
-  }, [isLoaded, location, company, searchQuery]);
+    }).catch(() => {});
+  }, [location, company, searchQuery, fnJobs]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    fnCompanies().catch(() => {});
+  }, [fnCompanies]);
 
-    fnCompanies();
-  }, [isLoaded]);
-
-  // Extract unique locations from all jobs data (unfiltered)
-  useEffect(() => {
-    if (dataAllJobs && dataAllJobs.length > 0) {
-      const locations = [...new Set(dataAllJobs.map((job) => job.location))].sort();
-      setUniqueLocations(locations);
-    }
-  }, [dataAllJobs]);
+  const uniqueLocations = useMemo(
+    () => [...new Set((dataAllJobs || []).map((job) => job.location).filter(Boolean))].sort(),
+    [dataAllJobs],
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -91,10 +76,6 @@ const JobListing = () => {
   };
 
   // ========================================= UI ===================================
-  if (!isLoaded) {
-    return <BarLoader className="mb-4" width={"100%"} color="#85D055" />;
-  }
-
   return (
     <div>
       <h1 className="gradient-title font-extrabold text-6xl sm:text-6xl text-start pb-5">
@@ -171,9 +152,10 @@ const JobListing = () => {
         <BarLoader className="mb-4" width={"100%"} color="#85D055" />
       )}
 
-      {!loadingJobs && (
+      {!loadingJobs && errorJobs && <p role="alert" className="text-red-500">{errorJobs.message}</p>}
+      {!loadingJobs && !errorJobs && (
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {dataJobs?.length ? (
+          {errorJobs ? <div role="alert">{errorJobs.message}</div> : dataJobs?.length ? (
             dataJobs.map((job) => {
               return (
                 <Jobcard

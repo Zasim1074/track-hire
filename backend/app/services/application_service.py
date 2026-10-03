@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -39,7 +40,11 @@ from app.schemas.application import (
     ApplicationResponse,
     ApplicationStatusHistoryResponse,
     ApplicationStatusUpdate,
+    ApplicantReview,
+    ApplicantReviewListResponse,
 )
+from app.schemas.candidate_profile import CandidateProfileResponse
+from app.core.storage import UPLOAD_DIR
 
 
 def apply_for_job(
@@ -115,6 +120,30 @@ def get_job_applications(
         total_pages=total_pages,
         total=total,
     )
+
+
+def get_job_applicant_reviews(
+    db: Session, job_id: UUID, current_user: User, page: int, page_size: int,
+    application_status: ApplicationStatus | None,
+) -> ApplicantReviewListResponse:
+    result = get_job_applications(db, job_id, current_user, page, page_size, application_status)
+    applications, _ = get_by_job_id(db, job_id, page, page_size, application_status)
+    items = [ApplicantReview(
+        id=app.id,
+        job_id=app.job_id,
+        candidate_id=app.candidate_id,
+        resume_id=app.resume_id,
+        cover_letter=app.cover_letter,
+        status=app.status,
+        recruiter_notes=app.recruiter_notes,
+        applied_at=app.applied_at,
+        updated_at=app.updated_at,
+        candidate_name=f"{app.candidate.first_name} {app.candidate.last_name}",
+        candidate_email=app.candidate.email,
+        profile=CandidateProfileResponse.model_validate(app.candidate.candidate_profile) if app.candidate.candidate_profile else None,
+        resume_file_name=app.resume.file_name,
+    ) for app in applications]
+    return ApplicantReviewListResponse(items=items, page=result.page, page_size=result.page_size, total=result.total, total_pages=result.total_pages)
 
 
 def update_application_status(
@@ -235,7 +264,7 @@ def create_application(
         raise JobNotFoundError
 
     # 3. Job must be published
-    if job.status != JobStatus.PUBLISHED:
+    if job.status != JobStatus.PUBLISHED or not job.is_active:
         raise JobNotAcceptingApplicationsError
 
     # 4. Resume must exist
@@ -327,6 +356,20 @@ def get_application(
     )
 
     return ApplicationResponse.model_validate(application)
+
+
+def get_application_resume_path(db: Session, application_id: UUID, current_user: User) -> tuple[Path, str]:
+    application = get_by_id(db, application_id)
+    if application is None:
+        raise ApplicationNotFoundError
+    require_application_access(db, application, current_user)
+    resume = get_resume_by_id(db, application.resume_id)
+    if resume is None:
+        raise ResumeNotFoundError
+    path = Path(resume.file_url).resolve()
+    if not path.is_relative_to(UPLOAD_DIR.resolve()) or not path.is_file():
+        raise ResumeNotFoundError
+    return path, resume.file_name
 
 
 def select_application(

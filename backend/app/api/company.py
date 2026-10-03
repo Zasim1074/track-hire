@@ -29,6 +29,11 @@ def add(payload: CompanyCreate, current_user:User = user_dependency, db: Session
     return company_service.create_company(db, current_user,payload)
 
 
+@router.get("/me", response_model=CompanyResponse | None, dependencies=[Depends(require_roles(UserRole.HR, UserRole.ADMIN))])
+def get_my_company(current_user: User = user_dependency, db: Session = db_dependency):
+    return company_service.get_my_company(db, current_user)
+
+
 @router.get("/{company_id}", response_model=CompanyResponse)
 def get_company(company_id: UUID, db: Session = db_dependency):
     return company_service.get_company(db, company_id)

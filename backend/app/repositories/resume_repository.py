@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.resume import Resume
+from app.models.application import Application
 
 
 def create(db: Session, resume: Resume) -> Resume:
@@ -21,6 +22,11 @@ def get_by_id(db: Session, resume_id: uuid.UUID) -> Resume | None:
 def get_by_candidate(db: Session, candidate_id: uuid.UUID) -> list[Resume]:
     stmt = (select(Resume).where(Resume.candidate_id == candidate_id).order_by(Resume.created_at.desc()))
     return list(db.scalars(stmt))
+
+
+def is_attached_to_application(db: Session, resume_id: uuid.UUID) -> bool:
+    stmt = select(Application.id).where(Application.resume_id == resume_id).limit(1)
+    return db.scalar(stmt) is not None
 
 
 def get_default(db: Session, candidate_id: uuid.UUID) -> Resume | None:

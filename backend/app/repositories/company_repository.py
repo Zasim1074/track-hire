@@ -1,9 +1,11 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.models.company import Company, CompanySize, Industry
+from app.models.company_membership import CompanyMembership, MembershipRole
+from app.models.user import User
 
 
 def create(db: Session, company: Company) -> Company:
@@ -25,6 +27,26 @@ def get_company_by_name(db: Session, name: str) -> list[Company]:
 
 def get_company_by_website(db: Session, website: str) -> Company | None:
     stmt = select(Company).where(Company.website == website)
+    return db.scalar(stmt)
+
+
+def get_primary_company_for_user(db: Session, user: User) -> Company | None:
+    stmt = (
+        select(Company)
+        .join(CompanyMembership, CompanyMembership.company_id == Company.id)
+        .where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.is_active.is_(True),
+            CompanyMembership.role.in_(
+                [MembershipRole.OWNER, MembershipRole.HR, MembershipRole.RECRUITER]
+            ),
+        )
+        .order_by(
+            case((CompanyMembership.role == MembershipRole.OWNER, 0), else_=1),
+            CompanyMembership.created_at.asc(),
+        )
+        .limit(1)
+    )
     return db.scalar(stmt)
 
 

@@ -1,22 +1,20 @@
 import {  getAppliedJobs } from "@/services/apiApplications";
 import { useFetch } from "@/services/useFetch";
 import React, { useEffect } from "react";
-import Jobcard from "./Jobcard";
 import { BarLoader } from "react-spinners";
 import ApplicationCard from "./ApplicationCard";
 
-const AppliedJobs = ({ user_id }) => {
+const AppliedJobs = () => {
   const {
     loading: loadingAppliedJobs,
     data: dataAppliedJobs,
     error: errorAppliedJobs,
     fn: fnAppliedJobs,
-  } = useFetch(getAppliedJobs, { user_id });
+  } = useFetch(getAppliedJobs);
 
   useEffect(() => {
-    if (!user_id) return;
-    fnAppliedJobs();
-  }, [user_id]);
+    fnAppliedJobs().catch(() => {});
+  }, [fnAppliedJobs]);
 
   if (loadingAppliedJobs) {
     return <BarLoader className="mb-4" width={"100%"} color="#85D055" />;
@@ -25,7 +23,7 @@ const AppliedJobs = ({ user_id }) => {
   return (
     <div>
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2  gap-4">
-        {dataAppliedJobs?.length ? (
+        {errorAppliedJobs ? <p role="alert">{errorAppliedJobs.message}</p> : dataAppliedJobs?.length ? (
           dataAppliedJobs.map((application) => {
             return (
               <ApplicationCard

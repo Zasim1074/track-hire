@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import React, { useState } from "react";
 import {
   Card,
@@ -7,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { BookmarkIcon, MapPinIcon, Trash2Icon } from "lucide-react";
+import { BookmarkIcon, MapPinIcon, Pencil, Trash2Icon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useFetch } from "../services/useFetch";
@@ -20,34 +19,35 @@ const Jobcard = ({
   savedInit = false,
   onJobSaved = () => {},
 }) => {
-  const { user } = useUser();
   const [saved, setSaved] = useState(savedInit);
-
-  const {
-    fn: fnSavedJobs,
-    data: dataSavedJobs,
-    loading: loadingSavedJobs,
-  } = useFetch(getSavedJobs, { alreadySaved: saved });
-
+  const [saveError, setSaveError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const { fn: fnDeleteJob, loading: loadingDeleteJob } = useFetch(deleteJob, {
     job_id: job.id,
   });
+  const { fn: fnSaveJob, loading: loadingSaveJob } = useFetch(getSavedJobs, {
+    job_id: job.id,
+    alreadySaved: saved,
+  });
 
   const handleDeleteJob = async () => {
-    await fnDeleteJob();
-    onJobSaved();
+    setDeleteError("");
+    try {
+      await fnDeleteJob();
+      onJobSaved();
+    } catch (error) {
+      setDeleteError(error.message);
+    }
   };
 
-  const handleSavedJob = async () => {
-    const user_id = user?.id;
-    const job_id = job?.id;
-
+  const toggleSaved = async () => {
+    setSaveError("");
     try {
-      await fnSavedJobs({ user_id, job_id });
+      await fnSaveJob({ alreadySaved: saved });
       setSaved(!saved);
       onJobSaved();
     } catch (error) {
-      console.error("Error saving job:", error);
+      setSaveError(error.message);
     }
   };
 
@@ -62,19 +62,22 @@ const Jobcard = ({
             {job?.title}
           </CardTitle>
           {isMyJob && (
-            <Trash2Icon
-              fill="red"
-              size={18}
-              className="text-red-300 cursor-pointer"
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Delete ${job.title}`}
               onClick={handleDeleteJob}
               disabled={loadingDeleteJob}
-            />
+            >
+              <Trash2Icon fill="red" size={18} className="text-red-300" />
+            </Button>
           )}
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
           <div className="flex justify-between">
-            {job.company && <img src={job.company?.logo_url} className="h-6" />}
+          {job.company?.logo_url && <img src={job.company.logo_url} className="h-6" alt={job.company.name || "Company"} />}
             <div className="flex gap-2 items-center">
               {<MapPinIcon size={15} />}
               {job.location}
@@ -82,11 +85,18 @@ const Jobcard = ({
           </div>
           <hr />
           <p className="text-1xl font-light">
-            {job?.description.substring(0, 150)} {"..."}
+            {(job?.description || "").substring(0, 150)} {"..."}
           </p>
         </CardContent>
       </div>
       <CardFooter className="flex gap-2">
+        {isMyJob && (
+          <Link to={`/post-job?job_id=${job.id}`}>
+            <Button type="button" variant="outline" size="icon" aria-label={`Edit ${job.title}`}>
+              <Pencil size={16} />
+            </Button>
+          </Link>
+        )}
         <Link to={`/jobs/${job.id}`} className="flex-1">
           <Button variant="secondary" className="w-full">
             More Details
@@ -96,8 +106,9 @@ const Jobcard = ({
         <Button
           variant="outline"
           className="w-14 transition-all duration-300 hover:scale-110"
-          onClick={handleSavedJob}
-          disabled={loadingSavedJobs}
+          onClick={toggleSaved}
+          disabled={loadingSaveJob}
+          aria-label={saved ? "Remove from saved" : "Save job"}
           title={saved ? "Remove from saved" : "Save job"}
         >
           <BookmarkIcon
@@ -108,6 +119,8 @@ const Jobcard = ({
           />
         </Button>
       </CardFooter>
+      {saveError && <p role="alert" className="px-5 pb-3 text-sm text-red-500">{saveError}</p>}
+      {deleteError && <p role="alert" className="px-5 pb-3 text-sm text-red-500">{deleteError}</p>}
     </Card>
   );
 };

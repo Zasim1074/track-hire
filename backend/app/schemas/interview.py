@@ -47,6 +47,7 @@ class InterviewUpdate(BaseModel):
 class InterviewResponse(BaseModel):
     id: uuid.UUID
     application_id: uuid.UUID
+    round_number: int
     interviewer_id: uuid.UUID
     scheduled_at: datetime
     duration_minutes: int

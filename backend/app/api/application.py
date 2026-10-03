@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user, get_db, require_roles
@@ -14,6 +15,7 @@ from app.schemas.application import (
     ApplicationResponse,
     ApplicationStatusHistoryResponse,
     ApplicationStatusUpdate,
+    ApplicantReviewListResponse,
 )
 from app.services import application_service
 
@@ -26,12 +28,23 @@ hr_admin_dependency = Depends(require_roles(MembershipRole.HR, MembershipRole.RE
 
 @router.post("/jobs/{job_id}/applications",dependencies=[candidate_dependency], response_model=ApplicationResponse, status_code=status.HTTP_201_CREATED)
 def create_application(job_id:UUID, payload:ApplicationCreate, db:Session = db_dependency, current_user:User=user_dependency):
-    return application_service.apply_for_job(db, job_id, payload, current_user)
+    return application_service.create_application(db, job_id, payload, current_user)
 
 
 @router.get("/jobs/{job_id}/applications", dependencies=[hr_admin_dependency], response_model=ApplicationListResponse, status_code=status.HTTP_200_OK)
 def get_job_applications(job_id:UUID, application_status:ApplicationStatus | None=None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), db:Session=db_dependency, current_user:User=user_dependency):
     return application_service.get_job_applications(db, job_id, current_user, page, page_size, application_status)
+
+
+@router.get("/jobs/{job_id}/applications/review", dependencies=[hr_admin_dependency], response_model=ApplicantReviewListResponse)
+def get_job_applicant_reviews(job_id: UUID, application_status: ApplicationStatus | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), db: Session = db_dependency, current_user: User = user_dependency):
+    return application_service.get_job_applicant_reviews(db, job_id, current_user, page, page_size, application_status)
+
+
+@router.get("/applications/{application_id}/resume")
+def download_application_resume(application_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
+    path, filename = application_service.get_application_resume_path(db, application_id, current_user)
+    return FileResponse(path, filename=filename, media_type="application/octet-stream")
 
 
 @router.get("/applications/me", dependencies=[candidate_dependency], response_model=ApplicationListResponse, status_code=status.HTTP_200_OK)
@@ -44,7 +57,7 @@ def update_application_Staus(application_id:UUID, payload:ApplicationStatusUpdat
     return application_service.update_application_status(db, application_id, payload,current_user)
 
 
-@router.post("/applications/{applications_id}/withdraw", dependencies=[candidate_dependency], response_model=ApplicationResponse, status_code=status.HTTP_200_OK)
+@router.post("/applications/{application_id}/withdraw", dependencies=[candidate_dependency], response_model=ApplicationResponse, status_code=status.HTTP_200_OK)
 def withdraw_application(application_id:UUID, db:Session=db_dependency, current_user:User=user_dependency):
     return application_service.withdraw_application(db, application_id, current_user)
 

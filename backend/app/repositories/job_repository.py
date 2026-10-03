@@ -1,9 +1,12 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.job import EmploymentType, ExperienceLevel, Job, JobStatus, WorkMode
+from app.models.company import Company
+from app.models.company_membership import CompanyMembership, MembershipRole
+from app.models.user import User, UserRole
 
 
 def create(db: Session, job: Job) -> Job:
@@ -33,6 +36,25 @@ def get_job_by_company_id(db: Session, copmany_id: UUID) -> list[Job]:
     return list(db.scalars(stmt))
 
 
+def get_jobs_for_user(db: Session, user: User, page: int, page_size: int) -> tuple[list[Job], int]:
+    stmt = select(Job).join(Company, Job.company_id == Company.id).outerjoin(
+        CompanyMembership,
+        (CompanyMembership.company_id == Job.company_id)
+        & (CompanyMembership.user_id == user.id)
+        & CompanyMembership.is_active.is_(True),
+    )
+    if user.role != UserRole.ADMIN:
+        stmt = stmt.where(or_(Company.owner_id == user.id, CompanyMembership.role.in_([
+            MembershipRole.OWNER, MembershipRole.HR, MembershipRole.RECRUITER,
+        ])))
+    ids = stmt.with_only_columns(Job.id, Job.created_at).distinct().order_by(Job.created_at.desc())
+    count_query = select(func.count()).select_from(ids.subquery())
+    count = db.scalar(count_query) or 0
+    page_ids = ids.limit(page_size).offset((page - 1) * page_size).subquery()
+    jobs = list(db.scalars(select(Job).where(Job.id.in_(select(page_ids.c.id))).order_by(Job.created_at.desc())))
+    return jobs, count
+
+
 def get_jobs(
     db: Session,
     page: int,
@@ -46,10 +68,9 @@ def get_jobs(
 
     stmt = select(Job).where(Job.is_active.is_(True))
 
-    if status is not None:
-        stmt = stmt.where(Job.status == status)
-    else:
-        stmt = stmt.where(Job.status == "PUBLISHED")
+    # The public listing must never expose drafts or closed jobs, even when a
+    # caller supplies a different status query parameter.
+    stmt = stmt.where(Job.status == JobStatus.PUBLISHED)
 
     if search is not None:
         stmt = stmt.where(Job.title.ilike(f"%{search}%"))

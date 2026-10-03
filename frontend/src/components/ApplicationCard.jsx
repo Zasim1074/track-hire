@@ -1,157 +1,83 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import {
-  Boxes,
-  Briefcase,
-  CheckCircle,
-  Clock,
-  Download,
-  Eye,
-  MapPinCheck,
-  School,
-  XCircle,
-} from "lucide-react";
-import { useFetch } from "@/services/useFetch";
-import { updateApplicationStatus } from "@/services/apiApplications";
+import { Button } from "./ui/button";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { BarLoader } from "react-spinners";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
+import { useFetch } from "@/services/useFetch";
+import { updateApplicationStatus, selectApplication, rejectApplication, withdrawApplication, downloadApplicantResume } from "@/services/apiApplications";
+import InterviewPanel from "@/components/InterviewPanel";
 
-const capitalizeFirstLetter = (str) =>
-  str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
-
-const ApplicationCard = ({ application, isCandidate = false }) => {
-  const [status, setStatus] = useState(application?.status || "applied");
-
-  const { loading: loadingApplication, fn: applicationStatusFn } = useFetch(
-    updateApplicationStatus,
-    {
-      application_id: application.id,
-    },
-  );
-
-  const handleStatusChange = async (newStatus) => {
-    const prev = status;
-    setStatus(newStatus);
-
-    try {
-      await applicationStatusFn(newStatus);
-    } catch (err) {
-      setStatus(prev);
-    }
-  };
-
-  const handleDownload = () => {
-    if (!application?.resume) return;
-    window.open(application.resume, "_blank", "noopener,noreferrer");
-  };
-
-  const StatusIcon = ({ status }) => {
-    switch (status) {
-      case "applied":
-        return <Clock size={18} className="text-white" />;
-
-      case "interviewing":
-        return <Eye size={18} className="text-blue-500" />;
-
-      case "hired":
-        return <CheckCircle size={18} className="text-green-500" />;
-
-      case "rejected":
-        return <XCircle size={18} className="text-red-500" />;
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div>
-      <Card>
-        {loadingApplication && (
-          <BarLoader className="mb-4" width={"100%"} color="#85D055" />
-        )}
-        <CardHeader className="px-5 pt-3 pb-1.5">
-          <CardTitle className="flex justify-between font-bold gap-2">
-            <div className="flex flex-row gap-10 items-center">
-              <h3 className="text-2xl">
-                {isCandidate ? `${application?.name}` : `${application?.name}`}
-              </h3>
-              <div className="flex flex-row gap-2 items-center">
-                <Briefcase />
-                <h3>
-                  Experience :
-                  <span className="pl-2">{application?.experience}</span> years
-                </h3>
-              </div>
-            </div>
-            <Download
-              size={18}
-              className="bg-white text-black rounded-md h-8 w-8 p-1.5 cursor-pointer"
-              onClick={handleDownload}
-            />
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="pb-1 pr-5">
-          <div className="felx flex-col md:flex-row justify-between text-sm md:text-md">
-            <div className="flex flex-row items-center gap-2">
-              <Boxes size={15} />
-              <p>{`skills :  ${application?.skills}`}</p>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <School size={15} />
-              <p>{`Education :  ${capitalizeFirstLetter(application?.education)} in  ${capitalizeFirstLetter(application?.degree)}`}</p>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <MapPinCheck size={15} />
-              <p>{`Location :  ${application?.location}`}</p>
-            </div>
-            <div className="w-full flex justify-between ">
-              {!isCandidate &&<Select
-                value={status}
-                onValueChange={async (value) => {
-                  setStatus(value);
-                  await handleStatusChange(value);
-                }}
-              >
-                <SelectTrigger className={`w-auto mt-2 h-8 gap-4`}>
-                  <SelectValue
-                    placeholder={`Application Status : ${application?.status}`}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="applied">Applied</SelectItem>
-                    <SelectItem value="interviewing">Interviewing</SelectItem>
-                    <SelectItem value="hired">Hired</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>}
-              {isCandidate && (
-                <div className="flex flex-row items-center gap-2">
-                  <p>{<StatusIcon status={application?.status} />}</p>
-                  <p>{`Status : ${capitalizeFirstLetter(application?.status)}`}</p>
-                </div>
-              )}
-              <span className="text-xs text-gray-400 mt-6">
-                {application?.created_at
-                  ? new Date(application.created_at).toLocaleString()
-                  : ""}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+const transitions = {
+  applied: ["screening", "rejected"],
+  screening: ["shortlisted", "rejected"],
+  shortlisted: ["rejected"],
 };
+const label = (value) => value ? value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "";
 
-export default ApplicationCard;
+export default function ApplicationCard({ application, isCandidate = false }) {
+  const [status, setStatus] = useState(application.status);
+  const [error, setError] = useState("");
+  const { loading, fn: updateStatus } = useFetch(updateApplicationStatus, { application_id: application.id });
+  const { loading: decisionLoading, fn: decide } = useFetch(async ({ action, reason }) => action === "select" ? selectApplication(application.id) : rejectApplication(application.id, reason));
+  const [downloading, setDownloading] = useState(false);
+
+  const changeStatus = async (next) => {
+    const before = status; setStatus(next); setError("");
+    try { await updateStatus({ status: next }); }
+    catch (err) { setStatus(before); setError(err.message); }
+  };
+  const decision = async (action) => {
+    setError("");
+    try { await decide({ action }); setStatus(action === "select" ? "selected" : "rejected"); }
+    catch (err) { setError(err.message); }
+  };
+  const download = async () => {
+    setDownloading(true); setError("");
+    try {
+      const blob = await downloadApplicantResume(application.id);
+      const url = URL.createObjectURL(blob); const link = document.createElement("a");
+      link.href = url; link.download = application.resume_file_name || "resume"; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) { setError(err.message); }
+    finally { setDownloading(false); }
+  };
+  const withdraw = async () => {
+    setError("");
+    try { await withdrawApplication(application.id); setStatus("withdrawn"); }
+    catch (err) { setError(err.message); }
+  };
+  const profile = application.profile;
+
+  return <Card>
+    {(loading || decisionLoading) && <BarLoader width="100%" color="#85D055" />}
+    <CardHeader className="px-5 pb-2 pt-3">
+      <CardTitle className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-lg">{isCandidate ? "Your application" : application.candidate_name}</span>
+        {!isCandidate && <Button variant="outline" size="sm" disabled={downloading} onClick={download}>{downloading ? "Loading…" : `Download ${application.resume_file_name || "resume"}`}</Button>}
+      </CardTitle>
+      {!isCandidate && <p className="text-sm text-muted-foreground">{application.candidate_email}</p>}
+    </CardHeader>
+    <CardContent className="space-y-2 px-5 pb-4 text-sm">
+      {!isCandidate && profile && <div className="space-y-1">
+        {profile.headline && <p className="font-medium">{profile.headline}</p>}
+        {profile.location && <p>Location: {profile.location}</p>}
+        {profile.experience_years != null && <p>Experience: {profile.experience_years} years</p>}
+        {profile.bio && <p>{profile.bio}</p>}
+        <div className="flex gap-3">{profile.linkedin_url && <a className="underline" href={profile.linkedin_url} target="_blank" rel="noreferrer">LinkedIn</a>}{profile.github_url && <a className="underline" href={profile.github_url} target="_blank" rel="noreferrer">GitHub</a>}{profile.portfolio_url && <a className="underline" href={profile.portfolio_url} target="_blank" rel="noreferrer">Portfolio</a>}</div>
+      </div>}
+      {application.cover_letter && <p className="whitespace-pre-wrap">{application.cover_letter}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+        <span>Status: {label(status)}</span>
+        {application.applied_at && <time className="text-xs text-muted-foreground">Applied {new Date(application.applied_at).toLocaleString()}</time>}
+      </div>
+      {isCandidate && !["selected", "rejected", "withdrawn"].includes(status) && <Button size="sm" variant="outline" onClick={withdraw}>Withdraw application</Button>}
+      {!isCandidate && transitions[status] && <Select value={status} onValueChange={changeStatus}>
+        <SelectTrigger aria-label="Application status" className="mt-2 w-48"><SelectValue /></SelectTrigger>
+        <SelectContent><SelectGroup>{transitions[status].map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectGroup></SelectContent>
+      </Select>}
+      {!isCandidate && status === "interview" && <div className="flex gap-2"><Button size="sm" variant="blue" disabled={decisionLoading} onClick={() => decision("select")}>Select candidate</Button><Button size="sm" variant="destructive" disabled={decisionLoading} onClick={() => decision("reject")}>Reject candidate</Button></div>}
+      {error && <p role="alert" className="text-red-500">{error}</p>}
+      {status !== "withdrawn" && <InterviewPanel application={{ ...application, status }} onScheduled={() => setStatus("interview")} />}
+    </CardContent>
+  </Card>;
+}

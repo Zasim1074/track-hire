@@ -1,10 +1,16 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.interview import Interview, InterviewStatus
+
+
+def as_utc_naive(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def create(
@@ -38,7 +44,6 @@ def has_conflict(
     duration_minutes: int,
     exclude_interview_id: UUID | None = None,
 ) -> bool:
-
     stmt = select(Interview).where(
         Interview.interviewer_id == interviewer_id,
         Interview.status == InterviewStatus.SCHEDULED,
@@ -49,14 +54,15 @@ def has_conflict(
 
     interviews = list(db.scalars(stmt))
 
-    new_end = scheduled_at + timedelta(minutes=duration_minutes)
+    new_start = as_utc_naive(scheduled_at)
+    new_end = new_start + timedelta(minutes=duration_minutes)
 
     for interview in interviews:
-        existing_start = interview.scheduled_at
+        existing_start = as_utc_naive(interview.scheduled_at)
 
         existing_end = existing_start + timedelta(minutes=interview.duration_minutes)
 
-        if scheduled_at < existing_end and new_end > existing_start:
+        if new_start < existing_end and new_end > existing_start:
             return True
 
     return False

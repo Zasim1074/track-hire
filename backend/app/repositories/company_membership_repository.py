@@ -7,8 +7,12 @@ from app.models.company_membership import CompanyMembership, MembershipRole
 
 
 def get_active_membership(db:Session, company_id:UUID, user_id:UUID) -> CompanyMembership | None:
-    stmt = select(CompanyMembership).where(CompanyMembership.company_id == company_id and CompanyMembership.user_id == user_id and CompanyMembership.is_active.is_(True))
-    return db.scalars(stmt)
+    stmt = select(CompanyMembership).where(
+        CompanyMembership.company_id == company_id,
+        CompanyMembership.user_id == user_id,
+        CompanyMembership.is_active.is_(True),
+    )
+    return db.scalar(stmt)
 
 
 def create(db:Session, membership:CompanyMembership) -> CompanyMembership:
@@ -24,7 +28,10 @@ def get_by_id(db:Session, membership_id:UUID) -> CompanyMembership | None:
 
 
 def get_by_company_and_user(db:Session, company_id:UUID, user_id:UUID) -> CompanyMembership | None:
-    stmt = select(CompanyMembership).where(CompanyMembership.company_id == company_id and CompanyMembership.user_id == user_id)
+    stmt = select(CompanyMembership).where(
+        CompanyMembership.company_id == company_id,
+        CompanyMembership.user_id == user_id,
+    )
     return db.scalar(stmt)
 
 def get_by_company(db: Session, company_id:UUID) -> list[CompanyMembership]:

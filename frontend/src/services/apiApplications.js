@@ -1,76 +1,33 @@
-import { supabaseUrl } from "@/utils/supabase";
+import { apiRequest } from "./apiClient";
 
-export const applyToJob = async (supabase, application) => {
-  const random = Math.floor(Math.random() * 99999);
-  const filename = `resume_${random}_${Date.now()}`;
+export async function applyToJob({ job_id, resume_id, cover_letter }) {
+  return apiRequest(`/api/jobs/${job_id}/applications`, {
+    method: "POST", body: { resume_id, cover_letter: cover_letter || null }, auth: true,
+  });
+}
 
-  const { error: errorStorage } = await supabase.storage
-    .from("resumes")
-    .upload(filename, application.resume);
+export const updateApplicationStatus = ({ application_id, status, recruiter_notes = null }) =>
+  apiRequest(`/api/applications/${application_id}/status`, {
+    method: "PATCH", body: { status, recruiter_notes }, auth: true,
+  });
 
-  if (errorStorage) {
-    console.error("Upload error:", errorStorage);
-    throw errorStorage;
-  }
+export async function getAppliedJobs() {
+  const result = await apiRequest("/api/applications/me?page=1&page_size=100", { auth: true });
+  return result.items || [];
+}
 
-  const resume = `${supabaseUrl}/storage/v1/object/public/resumes/${filename}`;
+export async function getPostedJobs() {
+  const result = await apiRequest("/api/jobs/me?page=1&page_size=100", { auth: true });
+  return result.items || [];
+}
 
-  const { data, error } = await supabase
-    .from("applications")
-    .insert([{ ...application, resume }])
-    .select();
+export async function getJobApplications({ job_id }) {
+  const result = await apiRequest(`/api/jobs/${job_id}/applications/review?page=1&page_size=100`, { auth: true });
+  return result.items || [];
+}
 
-  if (error) {
-    console.error("Application error:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-export const updateApplicationStatus = async (
-  supabase,
-  { application_id },
-  status,
-) => {
-  const { data, error } = await supabase
-    .from("applications")
-    .update({ status })
-    .eq("id", application_id)
-    .select();
-
-  if (error) {
-    console.error("Error updating application status:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-export const getAppliedJobs = async (supabase, { user_id }) => {
-  const { data, error } = await supabase
-    .from("applications")
-    .select("*, job:jobs(title, company:companies(name))")
-    .eq("candidate_id", user_id);
-
-  if (error) {
-    console.error("Error fetching applications:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-export const getPostedJobs = async (supabase, { recruiter_id }) => {
-  const { data, error } = await supabase
-    .from("jobs")
-    .select("*,  company:companies(name, logo_url)")
-    .eq("recruiter_id", recruiter_id);
-
-  if (error) {
-    console.error("Error fetching jobs:", error);
-    throw error;
-  }
-
-  return data;
-};
+export const selectApplication = (id) => apiRequest(`/api/${id}/select`, { method: "POST", auth: true });
+export const rejectApplication = (id, reason = null) => apiRequest(`/api/${id}/reject`, { method: "POST", body: { reason }, auth: true });
+export const withdrawApplication = (id) => apiRequest(`/api/applications/${id}/withdraw`, { method: "POST", auth: true });
+export const getApplicationHistory = (id) => apiRequest(`/api/${id}/history`, { auth: true });
+export const downloadApplicantResume = (id) => apiRequest(`/api/applications/${id}/resume`, { auth: true, responseType: "blob" });

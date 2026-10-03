@@ -29,7 +29,7 @@ def register(db: Session, payload: RegisterRequest) -> RegisterResponse:
         password_hash=hash_password(payload.password),
         first_name=payload.first_name,
         last_name=payload.last_name,
-        role=UserRole.CANDIDATE,
+        role=payload.role,
     )
 
     created_user = create(db, user)

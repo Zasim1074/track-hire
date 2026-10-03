@@ -33,6 +33,11 @@ class CompanyNotFoundError(AppException):
     detail = "Company doesn't exist."
 
 
+class CompanyMembershipRequiredError(AppException):
+    status_code = 409
+    detail = "Create or join a company before posting a job."
+
+
 class CannotDeleteCompanyError(AppException):
     status_code = 409
     detail = "Company can't be deleted because there are jobs listed."
@@ -81,6 +86,11 @@ class CandidateProfileNotFoundError(AppException):
 class ResumeNotFoundError(AppException):
     status_code = 404
     detail = "Resume doesn't exist."
+
+
+class ResumeInUseError(AppException):
+    status_code = 409
+    detail = "Resume is attached to an application and cannot be deleted."
 
 
 class InvalidResumeFileError(AppException):

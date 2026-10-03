@@ -53,7 +53,7 @@ class Application(Base):
     job: Mapped["Job"] = relationship(back_populates="applications")
     candidate: Mapped["User"] = relationship(back_populates="applications")
     resume: Mapped["Resume"] = relationship()
-    status_history: Mapped[list["ApplicationStatusHistory"]] = relationship(cascade="all, delete-orphan", order_by="ApplicationStatusHistory.created_at")
+    status_history: Mapped[list["ApplicationStatusHistory"]] = relationship(back_populates="application", cascade="all, delete-orphan", order_by="ApplicationStatusHistory.created_at")
     interviews: Mapped[list["Interview"]] = relationship(back_populates="application",cascade="all, delete-orphan")
     
     applied_at: Mapped[datetime] = mapped_column(DateTime, default=get_utc, nullable=False)

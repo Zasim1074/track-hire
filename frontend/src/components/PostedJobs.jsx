@@ -4,21 +4,22 @@ import { useFetch } from "@/services/useFetch";
 import { BarLoader } from "react-spinners";
 import Jobcard from "./Jobcard";
 
-const PostedJobs = ({ recruiter_id }) => {
+const PostedJobs = () => {
   const {
     loading: loadingPostedJobs,
     data: dataPostedJobs,
     fn: fnPostedJobs,
-  } = useFetch(getPostedJobs, { recruiter_id });
+    error: errorPostedJobs,
+  } = useFetch(getPostedJobs);
 
   useEffect(() => {
-    if (!recruiter_id) return;
-    fnPostedJobs();
-  }, [recruiter_id]);
+    fnPostedJobs().catch(() => {});
+  }, [fnPostedJobs]);
 
   if (loadingPostedJobs) {
     return <BarLoader className="mb-4" width={"100%"} color="#85D055" />;
   }
+  if (errorPostedJobs) return <p role="alert" className="text-red-500">{errorPostedJobs.message}</p>;
 
   return (
     <div>

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user
@@ -24,6 +25,12 @@ def get_my_resumes(db: Session = db_dependency, current_user: User = user_depend
 @router.get("/{resume_id}")
 def get_resume(resume_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
     return resume_service.get_resume(db, resume_id, current_user)
+
+
+@router.get("/{resume_id}/download")
+def download_resume(resume_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
+    path, filename = resume_service.get_resume_path(db, resume_id, current_user)
+    return FileResponse(path, filename=filename, media_type="application/octet-stream")
 
 
 @router.post("", response_model=ResumeResponse, status_code=status.HTTP_201_CREATED)

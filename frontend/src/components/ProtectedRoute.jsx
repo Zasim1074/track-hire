@@ -1,26 +1,18 @@
-import { useUser } from "@clerk/clerk-react";
-import { Navigate, Outlet, useLocation, } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { BarLoader } from "react-spinners";
+import { useAuth } from "@/auth/AuthContext";
 
 const ProtectedRoute = () => {
-  const { isSignedIn, user, isLoaded } = useUser();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
-  const { pathname } = location;
 
   // Loading State
-  if (!isLoaded) {
+  if (loading) {
     return <BarLoader className="mb-4" width={"100%"} color="#85D055" />;
   }
 
   // Not Logged In
-  if (!isSignedIn) {
-    return <Navigate to="/?sign-in=true" state={{ from: location }} replace />;
-  }
-
-  // Logged in but role not selected
-  if (user && !user?.unsafeMetadata?.role && pathname !== "/on-boarding") {
-    return <Navigate to="/on-boarding" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
 
   return <Outlet />;
 };

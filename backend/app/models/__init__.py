@@ -8,6 +8,7 @@ from app.models.interview_feedback import InterviewFeedback
 from app.models.job import Job
 from app.models.resume import Resume
 from app.models.user import User
+from app.models.saved_job import SavedJob
 
 __all__ = [
     "Application",
@@ -20,4 +21,5 @@ __all__ = [
     "Job",
     "Resume",
     "User",
+    "SavedJob",
 ]

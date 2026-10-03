@@ -91,7 +91,7 @@ def require_company_membership(db: Session, company_id: UUID, user: User) -> Com
     if membership is None:
         raise ForbiddenError
 
-    if membership.role not in {MembershipRole.HR, MembershipRole.RECRUITER}:
+    if membership.role not in {MembershipRole.HR, MembershipRole.RECRUITER, MembershipRole.OWNER}:
         raise ForbiddenError
 
     return membership

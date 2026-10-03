@@ -10,11 +10,12 @@ from app.core.exceptions import (
     ForbiddenError,
 )
 from app.models.company import Company, CompanySize, Industry
+from app.models.company_membership import CompanyMembership, MembershipRole
 from app.models.user import User
 from app.repositories.company_repository import (
-    create,
     get_company_by_id,
     get_company_by_website,
+    get_primary_company_for_user,
 )
 from app.repositories.company_repository import delete_company as repo_delete_company
 from app.repositories.company_repository import get_companies as repo_get_companies
@@ -44,10 +45,14 @@ def create_company(db: Session, current_user: User, payload: CompanyCreate) -> d
         owner_id=current_user.id,
     )
 
-    created_company = create(db, company)
+    db.add(company)
+    db.flush()
+    db.add(CompanyMembership(company_id=company.id, user_id=current_user.id, role=MembershipRole.OWNER))
+    db.commit()
+    db.refresh(company)
     return {
         "message": "Company added successfully!",
-        "details": CompanyResponse.model_validate(created_company),
+        "details": CompanyResponse.model_validate(company),
     }
 
 
@@ -56,6 +61,11 @@ def get_company(db: Session, company_id: UUID) -> CompanyResponse:
     if company is None:
         raise CompanyNotFoundError
     return CompanyResponse.model_validate(company)
+
+
+def get_my_company(db: Session, current_user: User) -> CompanyResponse | None:
+    company = get_primary_company_for_user(db, current_user)
+    return CompanyResponse.model_validate(company) if company is not None else None
 
 
 def get_companies(

@@ -28,7 +28,7 @@ class ApplicationStatusHistory(Base):
     changed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"),nullable=False)
     notes: Mapped[str | None] = mapped_column(Text,nullable=True)
     
-    application: Mapped["Application"] = relationship()
+    application: Mapped["Application"] = relationship(back_populates="status_history")
     user: Mapped["User"] = relationship()
     
     created_at: Mapped[datetime] = mapped_column(DateTime,default=get_utc,nullable=False)

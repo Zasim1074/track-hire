@@ -20,7 +20,7 @@ from app.models.interview import Interview, InterviewStatus
 from app.models.user import User, UserRole
 from app.repositories.application_repository import get_by_id as get_application_by_id
 from app.repositories.interview_repository import (
-    create,
+    as_utc_naive,
     get_by_application_id,
     get_next_round_number,
     has_conflict,
@@ -79,7 +79,7 @@ def create_interview(db: Session, application_id: UUID, payload: InterviewCreate
         application_id=application.id,
         interviewer_id=interviewer.id,
         round_number=round_number,
-        scheduled_at=payload.scheduled_at,
+        scheduled_at=as_utc_naive(payload.scheduled_at),
         duration_minutes=payload.duration_minutes,
         meeting_url=payload.meeting_url,
         interview_type=payload.interview_type,
@@ -128,7 +128,8 @@ def get_application_interviews(db: Session, application_id: UUID, current_user: 
         raise ApplicationNotFoundError
 
     # Candidate → only their own application
-    if current_user.role == UserRole.CANDIDATE and application.candidate_id != current_user.id:
+    if current_user.role == UserRole.CANDIDATE:
+        if application.candidate_id != current_user.id:
             raise ForbiddenError
     # HR → must belong to application's company
     elif current_user.role == MembershipRole.HR:
@@ -223,6 +224,8 @@ def update_interview(
 
     # Apply updates
     for field, value in updates.items():
+        if field == "scheduled_at" and value is not None:
+            value = as_utc_naive(value)
         setattr(interview, field, value)
 
     db.commit()
