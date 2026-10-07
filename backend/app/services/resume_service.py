@@ -107,7 +107,7 @@ async def delete_resume(db: Session, resume_id: UUID, current_user: User ) -> No
     if is_attached_to_application(db, resume_id):
         raise ResumeInUseError
 
-    # Preserve the database record if R2 cannot delete the object.
+    # Preserve the database record if object storage cannot delete the file.
     await delete_resume_object(resume.file_url)
     delete(db, resume)
 

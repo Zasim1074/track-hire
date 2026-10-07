@@ -1,73 +1,70 @@
 from collections.abc import AsyncIterator
+from io import BytesIO
 from typing import Any
 from uuid import UUID, uuid4
 
 import anyio
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import UploadFile
+from supabase import create_client
 
 from app.core.config import settings
 from app.core.exceptions import ObjectStorageError, ResumeNotFoundError
 
 
-def _client() -> Any:
-    if not all((
-        settings.r2_account_id,
-        settings.r2_access_key_id,
-        settings.r2_secret_access_key,
-        settings.r2_bucket_name,
-        settings.r2_endpoint_url,
-    )):
+def _storage_bucket() -> Any:
+    if not all((settings.supabase_url, settings.supabase_secret_key, settings.supabase_bucket_name)):
         raise ObjectStorageError
     try:
-        return boto3.client(
-            "s3",
-            endpoint_url=settings.r2_endpoint_url,
-            aws_access_key_id=settings.r2_access_key_id,
-            aws_secret_access_key=settings.r2_secret_access_key,
-            region_name="auto",
-        )
-    except (BotoCoreError, ClientError) as exc:
+        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        return client.storage.from_(settings.supabase_bucket_name)
+    except Exception as exc:
         raise ObjectStorageError from exc
 
 
 async def save_resume(candidate_id: UUID, file: UploadFile, extension: str) -> str:
     key = f"resumes/{candidate_id}/{uuid4()}{extension}"
-    try:
-        await anyio.to_thread.run_sync(
-            lambda: _client().upload_fileobj(
-                file.file,
-                settings.r2_bucket_name,
-                key,
-                ExtraArgs={"ContentType": file.content_type or "application/octet-stream"},
+    contents = await file.read()
+
+    def upload() -> None:
+        try:
+            _storage_bucket().upload(
+                path=key,
+                file=contents,
+                file_options={
+                    "content-type": file.content_type or "application/octet-stream",
+                    "upsert": "false",
+                },
             )
-        )
-    except (BotoCoreError, ClientError, OSError) as exc:
-        raise ObjectStorageError from exc
+        except Exception as exc:
+            # print("SUPABASE UPLOAD ERROR:", repr(exc))
+            raise ObjectStorageError from exc
+
+    await anyio.to_thread.run_sync(upload)
     return key
 
 
 async def download_resume(key: str) -> Any:
-    try:
-        return await anyio.to_thread.run_sync(
-            lambda: _client().get_object(Bucket=settings.r2_bucket_name, Key=key)["Body"]
-        )
-    except ClientError as exc:
-        if exc.response.get("Error", {}).get("Code") in {"404", "NoSuchKey", "NotFound"}:
-            raise ResumeNotFoundError from exc
-        raise ObjectStorageError from exc
-    except (BotoCoreError, OSError) as exc:
-        raise ObjectStorageError from exc
+    def download() -> BytesIO:
+        try:
+            result = _storage_bucket().download(key)
+            return BytesIO(result)
+        except Exception as exc:
+            status_code = getattr(exc, "status_code", None)
+            if status_code == 404 or "not found" in str(exc).lower():
+                raise ResumeNotFoundError from exc
+            raise ObjectStorageError from exc
+
+    return await anyio.to_thread.run_sync(download)
 
 
 async def delete_resume_object(key: str) -> None:
-    try:
-        await anyio.to_thread.run_sync(
-            lambda: _client().delete_object(Bucket=settings.r2_bucket_name, Key=key)
-        )
-    except (BotoCoreError, ClientError, OSError) as exc:
-        raise ObjectStorageError from exc
+    def delete() -> None:
+        try:
+            _storage_bucket().remove([key])
+        except Exception as exc:
+            raise ObjectStorageError from exc
+
+    await anyio.to_thread.run_sync(delete)
 
 
 async def stream_object(body: Any, chunk_size: int = 64 * 1024) -> AsyncIterator[bytes]:
