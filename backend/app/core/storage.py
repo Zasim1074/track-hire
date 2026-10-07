@@ -36,7 +36,7 @@ async def save_resume(candidate_id: UUID, file: UploadFile, extension: str) -> s
                 },
             )
         except Exception as exc:
-            # print("SUPABASE UPLOAD ERROR:", repr(exc))
+            print("SUPABASE UPLOAD ERROR:", repr(exc))
             raise ObjectStorageError from exc
 
     await anyio.to_thread.run_sync(upload)
@@ -73,3 +73,8 @@ async def stream_object(body: Any, chunk_size: int = 64 * 1024) -> AsyncIterator
             yield chunk
     finally:
         await anyio.to_thread.run_sync(body.close)
+
+
+# git add .
+# git commit -m "new update 1"
+# git push origin main
