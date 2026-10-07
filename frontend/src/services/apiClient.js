@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
+import { API_BASE_URL } from "../config/api";
 const TOKEN_KEY = "trackhire_access_token";
 
 export class ApiError extends Error {
@@ -99,7 +99,12 @@ async function performApiRequest(
     }
     const detail = data?.detail;
     const validationDetails = (data?.errors || [])
-      .map((issue) => `${Array.isArray(issue.loc) ? issue.loc.filter((part) => part !== "body").join(".") : ""}: ${issue.msg}`.replace(/^: /, ""))
+      .map((issue) =>
+        `${Array.isArray(issue.loc) ? issue.loc.filter((part) => part !== "body").join(".") : ""}: ${issue.msg}`.replace(
+          /^: /,
+          "",
+        ),
+      )
       .filter(Boolean);
     const message =
       typeof detail === "string"
