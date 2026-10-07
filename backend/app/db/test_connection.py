@@ -8,5 +8,4 @@ try:
         connection.execute(text("SELECT 1"))
         print("✅ Database connected successfully!")
 except SQLAlchemyError as e:
-    print("❌ Connection failed")
-    print(e)
+    print("❌ Connection failed! Error: ", e)

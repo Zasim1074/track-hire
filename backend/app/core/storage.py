@@ -36,7 +36,7 @@ async def save_resume(candidate_id: UUID, file: UploadFile, extension: str) -> s
                 },
             )
         except Exception as exc:
-            print("SUPABASE RESUME UPLOAD ERROR:", repr(exc))
+            # print("SUPABASE RESUME UPLOAD ERROR:", repr(exc))
             raise ObjectStorageError from exc
 
     await anyio.to_thread.run_sync(upload)
