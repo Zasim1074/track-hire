@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 const authMocks = vi.hoisted(() => ({ useAuth: vi.fn() }));
 vi.mock("@/auth/AuthContext", () => ({ useAuth: authMocks.useAuth }));
 
-import AuthPage from "./AuthPage";
+import AuthPage from "../AuthPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 function renderPage(mode) {
@@ -15,6 +15,7 @@ function renderPage(mode) {
         <Route path={`/${mode}`} element={<AuthPage mode={mode} />} />
         <Route path="/jobs" element={<p>Jobs page</p>} />
         <Route path="/post-job" element={<p>Post job page</p>} />
+        <Route path="/dashboard" element={<p>Recruiter dashboard</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -64,7 +65,7 @@ describe("FastAPI authentication screens", () => {
       target: { value: "password123" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
-    await waitFor(() => expect(screen.getByText("Post job page")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Recruiter dashboard")).toBeTruthy());
   });
 
   it("registers the selected role and reports API errors", async () => {

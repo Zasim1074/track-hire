@@ -40,7 +40,7 @@ export default function AuthPage({ mode }) {
       const redirect =
         params.get("returnTo") ||
         location.state?.from?.pathname ||
-        (loggedIn.role === "hr" ? "/post-job" : "/jobs");
+        (loggedIn.role === "hr" || loggedIn.role === "admin" ? "/dashboard" : "/jobs");
       navigate(redirect, { replace: true });
     } catch (err) {
       setError(err.message || "Unable to authenticate.");

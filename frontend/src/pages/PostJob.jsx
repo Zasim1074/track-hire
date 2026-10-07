@@ -34,6 +34,7 @@ const schema = z.object({
   max_experience: optionalInteger,
   min_salary: optionalInteger,
   max_salary: optionalInteger,
+  skills: z.string().optional(),
 }).superRefine((job, context) => {
   if (job.max_experience !== null && job.max_experience < job.min_experience) {
     context.addIssue({ code: "custom", path: ["max_experience"], message: "Maximum experience must be at least the minimum" });
@@ -49,7 +50,7 @@ export default function PostJob() {
   const [searchParams] = useSearchParams();
   const editingJobId = searchParams.get("job_id");
   const [company, setCompany] = useState(undefined);
-  const [companyLoading, setCompanyLoading] = useState(false);
+  const [companyLoading, setCompanyLoading] = useState(true);
   const [companyError, setCompanyError] = useState("");
 
   const {
@@ -94,7 +95,7 @@ export default function PostJob() {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: "", description: "", location: "", work_mode: "onsite",
+      title: "", description: "", location: "", work_mode: "onsite", skills: "",
       employment_type: "full_time", experience_level: "entry", min_experience: 0,
       max_experience: "", min_salary: "", max_salary: "",
     },
@@ -106,6 +107,7 @@ export default function PostJob() {
       "title", "description", "location", "work_mode", "employment_type",
       "experience_level", "min_experience", "max_experience", "min_salary", "max_salary",
     ]) setValue(field, currentJob[field] ?? (field === "min_experience" ? 0 : ""));
+    setValue("skills", (currentJob.skills || []).join(", "));
   }, [currentJob, setValue]);
 
   const onSubmit = (values) => {
@@ -113,13 +115,14 @@ export default function PostJob() {
       fnUpdateJob({
         job_id: editingJobId,
         ...values,
-        skills: currentJob.skills ?? [],
+        skills: values.skills.split(",").map((skill) => skill.trim()).filter(Boolean),
         application_deadline: currentJob.application_deadline ?? null,
         status: currentJob.status,
         is_active: currentJob.is_active,
       }).catch(() => {});
     } else {
-      fnPostJob({ ...values, skills: [], status: "published" }).catch(() => {});
+      const { skills, ...jobFields } = values;
+      fnPostJob({ ...jobFields, skills: skills.split(",").map((skill) => skill.trim()).filter(Boolean), status: "published" }).catch(() => {});
     }
   };
 
@@ -133,7 +136,7 @@ export default function PostJob() {
   if (authLoading) return <BarLoader className="mb-4" width="100%" color="#85D055" />;
   if (user?.role !== "hr" && user?.role !== "admin") return <Navigate to="/jobs" replace />;
   if (companyLoading || (user && !company && company === undefined) || (editingJobId && loadingJob)) return <BarLoader className="mb-4" width="100%" color="#85D055" />;
-  if (companyError) return <p role="alert" className="text-red-500">{companyError}</p>;
+  if (companyError) return <div role="alert" className="rounded-lg border p-6"><p className="text-red-500">Unable to load your company: {companyError}</p><Button className="mt-3" variant="outline" onClick={() => { setCompanyError(""); setCompanyLoading(true); getMyCompany().then(setCompany).catch((error) => setCompanyError(error.message)).finally(() => setCompanyLoading(false)); }}>Try again</Button></div>;
   if (!company) return <CompanySetupForm onCreated={setCompany} />;
 
   return (
@@ -161,6 +164,7 @@ export default function PostJob() {
             <Input aria-label="Job location" placeholder="Location" {...register("location")} />
             {errors.location && <p className="text-red-500">{errors.location.message}</p>}
           </div>
+          <div><Input aria-label="Skills" placeholder="Skills, separated by commas" {...register("skills")} /><p className="text-xs text-muted-foreground">Add skills candidates should have.</p></div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="grid gap-1 text-sm">Work mode
               <select aria-label="Work mode" className="h-10 rounded-md border bg-background px-3" {...register("work_mode")}>

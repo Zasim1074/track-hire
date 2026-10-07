@@ -7,7 +7,7 @@ const profileApi = vi.hoisted(() => ({
   updateCandidateProfile: vi.fn(),
 }));
 vi.mock("@/services/apiCandidateProfile", () => profileApi);
-import CandidateProfilePage from "./CandidateProfilePage";
+import CandidateProfilePage from "../CandidateProfilePage";
 
 describe("candidate profile form", () => {
   beforeEach(() => {
@@ -52,8 +52,7 @@ describe("candidate profile form", () => {
       new Error("Please sign in again."),
     );
     render(<CandidateProfilePage />);
-    expect(await screen.findByRole("alert")).toHaveProperty(
-      "textContent",
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "Please sign in again.",
     );
   });

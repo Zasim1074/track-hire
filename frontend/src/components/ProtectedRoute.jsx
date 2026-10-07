@@ -2,8 +2,8 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { BarLoader } from "react-spinners";
 import { useAuth } from "@/auth/AuthContext";
 
-const ProtectedRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ allowedRoles }) => {
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
   // Loading State
@@ -13,6 +13,7 @@ const ProtectedRoute = () => {
 
   // Not Logged In
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (allowedRoles && !allowedRoles.includes(user?.role)) return <Navigate to="/unauthorized" replace />;
 
   return <Outlet />;
 };

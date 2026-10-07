@@ -14,6 +14,8 @@ const Job = lazy(() => import("./pages/Job"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const CandidateProfilePage = lazy(() => import("./pages/CandidateProfilePage"));
 const ResumesPage = lazy(() => import("./pages/ResumesPage"));
+const RoleHome = lazy(() => import("./pages/RoleHome"));
+const ForbiddenPage = lazy(() => import("./pages/ForbiddenPage"));
 
 const router = createBrowserRouter([
   {
@@ -25,19 +27,27 @@ const router = createBrowserRouter([
       { path: "/jobs", element: <JobListing /> },
       { path: "/login", element: <AuthPage mode="login" /> },
       { path: "/register", element: <AuthPage mode="register" /> },
+      { path: "/unauthorized", element: <ForbiddenPage /> },
 
       // Protected Routes
       {
         element: <ProtectedRoute />,
         children: [
+          { path: "/dashboard", element: <RoleHome /> },
           { path: "/jobs/:id", element: <Job /> },
-          { path: "/post-job", element: <PostJob /> },
-          { path: "/saved-jobs", element: <SavedJobs /> },
-          { path: "/my-jobs", element: <MyJobs /> },
-          { path: "/profile", element: <CandidateProfilePage /> },
-          { path: "/resumes", element: <ResumesPage /> },
+          { element: <ProtectedRoute allowedRoles={["hr", "admin"]} />, children: [
+            { path: "/post-job", element: <PostJob /> },
+            { path: "/my-jobs", element: <MyJobs /> },
+          ] },
+          { element: <ProtectedRoute allowedRoles={["candidate"]} />, children: [
+            { path: "/saved-jobs", element: <SavedJobs /> },
+            { path: "/profile", element: <CandidateProfilePage /> },
+            { path: "/resumes", element: <ResumesPage /> },
+            { path: "/my-applications", element: <MyJobs /> },
+          ] },
         ],
       },
+      { path: "*", element: <div className="py-20 text-center"><h1 className="text-3xl font-bold">Page not found</h1><p className="mt-3">This TrackHire page doesn’t exist.</p></div> },
     ],
   },
 ]);

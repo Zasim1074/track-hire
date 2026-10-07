@@ -8,6 +8,7 @@ const jobApi = vi.hoisted(() => ({
 }));
 
 vi.mock("@/services/apiJobs", () => jobApi);
+vi.mock("@/auth/AuthContext", () => ({ useAuth: () => ({ user: { role: "candidate" } }) }));
 vi.mock("@/services/useFetch", () => ({
   useFetch: (callback, options = {}) => ({
     loading: false,
@@ -15,7 +16,7 @@ vi.mock("@/services/useFetch", () => ({
   }),
 }));
 
-import Jobcard from "./Jobcard";
+import Jobcard from "../Jobcard";
 
 const job = {
   id: "job-1",
@@ -45,24 +46,46 @@ describe("Jobcard actions", () => {
 
     const saveButton = screen.getByRole("button", { name: "Save job" });
     fireEvent.click(saveButton);
-    await waitFor(() => expect(jobApi.getSavedJobs).toHaveBeenCalledWith({ job_id: "job-1", alreadySaved: false }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Remove from saved" })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(jobApi.getSavedJobs).toHaveBeenCalledWith({
+        job_id: "job-1",
+        alreadySaved: false,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Remove from saved" }),
+      ).toBeInTheDocument(),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Remove from saved" }));
-    await waitFor(() => expect(jobApi.getSavedJobs).toHaveBeenLastCalledWith({ job_id: "job-1", alreadySaved: true }));
+    await waitFor(() =>
+      expect(jobApi.getSavedJobs).toHaveBeenLastCalledWith({
+        job_id: "job-1",
+        alreadySaved: true,
+      }),
+    );
     expect(onJobSaved).toHaveBeenCalledTimes(2);
   });
 
   it("shows save errors and exposes a working delete button for posted jobs", async () => {
-    jobApi.getSavedJobs.mockRejectedValueOnce(new Error("Please sign in again."));
+    jobApi.getSavedJobs.mockRejectedValueOnce(
+      new Error("Please sign in again."),
+    );
     const onJobSaved = vi.fn();
     renderCard({ isMyJob: true, onJobSaved });
 
     fireEvent.click(screen.getByRole("button", { name: "Save job" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Please sign in again.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Please sign in again.",
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Frontend Engineer" }));
-    await waitFor(() => expect(jobApi.deleteJob).toHaveBeenCalledWith({ job_id: "job-1" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete Frontend Engineer" }),
+    );
+    await waitFor(() =>
+      expect(jobApi.deleteJob).toHaveBeenCalledWith({ job_id: "job-1" }),
+    );
     expect(onJobSaved).toHaveBeenCalledTimes(1);
   });
 });

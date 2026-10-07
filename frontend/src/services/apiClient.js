@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 const TOKEN_KEY = "trackhire_access_token";
 
 export class ApiError extends Error {
@@ -15,9 +14,49 @@ export const getAccessToken = () => localStorage.getItem(TOKEN_KEY);
 export const setAccessToken = (token) => localStorage.setItem(TOKEN_KEY, token);
 export const clearAccessToken = () => localStorage.removeItem(TOKEN_KEY);
 
-export async function apiRequest(
+const pendingGetRequests = new Map();
+
+export async function apiRequest(path, options = {}) {
+  const {
+    method = "GET",
+    auth = false,
+    headers = {},
+    responseType = "json",
+  } = options;
+
+  if (method !== "GET") return performApiRequest(path, options);
+
+  const requestKey = JSON.stringify([
+    path,
+    method,
+    auth,
+    auth ? getAccessToken() : null,
+    responseType,
+    [...new Headers(headers).entries()],
+  ]);
+  const pendingRequest = pendingGetRequests.get(requestKey);
+  if (pendingRequest) return pendingRequest;
+
+  const request = performApiRequest(path, options);
+  pendingGetRequests.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    if (pendingGetRequests.get(requestKey) === request) {
+      pendingGetRequests.delete(requestKey);
+    }
+  }
+}
+
+async function performApiRequest(
   path,
-  { method = "GET", body, headers = {}, auth = false, responseType = "json" } = {},
+  {
+    method = "GET",
+    body,
+    headers = {},
+    auth = false,
+    responseType = "json",
+  } = {},
 ) {
   const requestHeaders = new Headers(headers);
   const isFormData = body instanceof FormData;
@@ -59,9 +98,14 @@ export async function apiRequest(
       window.dispatchEvent(new Event("trackhire:unauthorized"));
     }
     const detail = data?.detail;
+    const validationDetails = (data?.errors || [])
+      .map((issue) => `${Array.isArray(issue.loc) ? issue.loc.filter((part) => part !== "body").join(".") : ""}: ${issue.msg}`.replace(/^: /, ""))
+      .filter(Boolean);
     const message =
       typeof detail === "string"
-        ? detail
+        ? response.status === 422 && validationDetails.length
+          ? validationDetails.join(" · ")
+          : detail
         : response.status === 401
           ? "Please sign in again."
           : response.status === 403

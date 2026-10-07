@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { AuthProvider, useAuth } from "./AuthContext";
+import { AuthProvider, useAuth } from "../AuthContext";
 import { setAccessToken, getAccessToken } from "@/services/apiClient";
 
 function SessionProbe() {
@@ -19,18 +19,16 @@ describe("FastAPI authentication session", () => {
     setAccessToken("saved-jwt");
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              id: "u1",
-              email: "user@example.test",
-              role: "candidate",
-            }),
-            { status: 200, headers: { "Content-Type": "application/json" } },
-          ),
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "u1",
+            email: "user@example.test",
+            role: "candidate",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
         ),
+      ),
     );
     render(
       <AuthProvider>
@@ -55,14 +53,12 @@ describe("FastAPI authentication session", () => {
     setAccessToken("expired-jwt");
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ detail: "Invalid credentials" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ detail: "Invalid credentials" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
     );
     render(
       <AuthProvider>

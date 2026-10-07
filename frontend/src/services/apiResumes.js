@@ -7,6 +7,12 @@ export async function uploadResume(file) {
 }
 
 export const getMyResumes = () => apiRequest("/resumes/me", { auth: true });
-export const deleteResume = (resume_id) => apiRequest(`/resumes/${resume_id}`, { method: "DELETE", auth: true });
-export const setDefaultResume = (resume_id) => apiRequest(`/resumes/${resume_id}/default`, { method: "PATCH", auth: true });
-export const downloadResume = (resume_id) => apiRequest(`/resumes/${resume_id}/download`, { auth: true, responseType: "blob" });
+export const deleteResume = (resume_id) =>
+  apiRequest(`/resumes/${resume_id}`, { method: "DELETE", auth: true });
+export const setDefaultResume = (resume_id) =>
+  apiRequest(`/resumes/${resume_id}/default`, { method: "PATCH", auth: true });
+export const downloadResume = (resume_id) =>
+  apiRequest(`/resumes/${resume_id}/download`, {
+    auth: true,
+    responseType: "blob",
+  });

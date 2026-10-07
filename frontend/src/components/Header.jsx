@@ -20,8 +20,9 @@ const Header = () => {
         </Link>
         <div className="flex gap-3 items-center">
           {user ? <>
-            {user.role === "hr" && <Link to="/post-job"><Button variant="destructive" className="rounded-full"><PenBox size={20} />Post a Job</Button></Link>}
-            <Link to="/my-jobs" aria-label="My jobs"><Button variant="ghost" size="icon"><BriefcaseBusiness /></Button></Link>
+            {(user.role === "hr" || user.role === "admin") && <Link to="/dashboard"><Button variant="ghost">Dashboard</Button></Link>}
+            {(user.role === "hr" || user.role === "admin") && <Link to="/post-job"><Button variant="destructive" className="rounded-full"><PenBox size={20} />Post a Job</Button></Link>}
+            <Link to={user.role === "candidate" ? "/my-applications" : "/my-jobs"} aria-label={user.role === "candidate" ? "My applications" : "My jobs"}><Button variant="ghost" size="icon"><BriefcaseBusiness /></Button></Link>
             {user.role === "candidate" && <>
               <Link to="/saved-jobs" aria-label="Saved jobs"><Button variant="ghost" size="icon"><Heart /></Button></Link>
               <Link to="/profile" aria-label="Candidate profile"><Button variant="ghost" size="icon"><UserRound /></Button></Link>

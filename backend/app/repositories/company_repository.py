@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import case, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.company import Company, CompanySize, Industry
@@ -41,13 +41,13 @@ def get_primary_company_for_user(db: Session, user: User) -> Company | None:
                 [MembershipRole.OWNER, MembershipRole.HR, MembershipRole.RECRUITER]
             ),
         )
-        .order_by(
-            case((CompanyMembership.role == MembershipRole.OWNER, 0), else_=1),
-            CompanyMembership.created_at.asc(),
-        )
-        .limit(1)
     )
-    return db.scalar(stmt)
+    companies = list(db.scalars(stmt).unique())
+    if len(companies) > 1:
+        from app.core.exceptions import MultipleCompanyMembershipsError
+
+        raise MultipleCompanyMembershipsError
+    return companies[0] if companies else None
 
 
 def get_companies(

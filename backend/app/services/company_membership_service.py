@@ -8,6 +8,7 @@ from app.core.exceptions import (
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
     StatusCannotBeSameError,
+    CompanyMembershipExistsError,
 )
 from app.models.company_membership import CompanyMembership
 from app.models.user import User
@@ -17,6 +18,7 @@ from app.repositories.company_membership_repository import (
     get_by_company,
     get_by_company_and_user,
     get_by_id,
+    get_active_for_user,
     update_membership,
 )
 from app.repositories.company_repository import get_company_by_id
@@ -42,6 +44,8 @@ def add_member(db:Session, company_id:UUID, payload:MembershipCreate, current_us
     existing_membership = get_by_company_and_user(db, company_id, payload.user_id)
     if existing_membership is not None:
         raise MembershipAlreadyExistsError
+    if get_active_for_user(db, payload.user_id):
+        raise CompanyMembershipExistsError
     
     membership = CompanyMembership(
         company_id=company_id,

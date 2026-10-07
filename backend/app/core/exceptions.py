@@ -38,6 +38,16 @@ class CompanyMembershipRequiredError(AppException):
     detail = "Create or join a company before posting a job."
 
 
+class MultipleCompanyMembershipsError(AppException):
+    status_code = 409
+    detail = "Your account has more than one active company membership. Ask an administrator to resolve the memberships before posting jobs."
+
+
+class CompanyMembershipExistsError(AppException):
+    status_code = 409
+    detail = "Your account already belongs to a company. Contact the company owner to update your membership."
+
+
 class CannotDeleteCompanyError(AppException):
     status_code = 409
     detail = "Company can't be deleted because there are jobs listed."
@@ -96,6 +106,11 @@ class ResumeInUseError(AppException):
 class InvalidResumeFileError(AppException):
     status_code = 400
     detail = "Invalid resume file."
+
+
+class ObjectStorageError(AppException):
+    status_code = 503
+    detail = "Resume storage is temporarily unavailable."
 
 
 class AlreadyAppliedError(AppException):

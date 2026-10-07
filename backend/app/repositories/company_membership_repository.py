@@ -34,6 +34,15 @@ def get_by_company_and_user(db:Session, company_id:UUID, user_id:UUID) -> Compan
     )
     return db.scalar(stmt)
 
+
+def get_active_for_user(db: Session, user_id: UUID) -> list[CompanyMembership]:
+    stmt = select(CompanyMembership).where(
+        CompanyMembership.user_id == user_id,
+        CompanyMembership.is_active.is_(True),
+        CompanyMembership.role.in_([MembershipRole.HR, MembershipRole.RECRUITER, MembershipRole.OWNER]),
+    )
+    return list(db.scalars(stmt))
+
 def get_by_company(db: Session, company_id:UUID) -> list[CompanyMembership]:
     stmt = select(CompanyMembership).where(CompanyMembership.company_id == company_id).order_by(CompanyMembership.created_at.desc())
     return list(db.scalars(stmt))

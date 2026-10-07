@@ -1,4 +1,3 @@
-from app.core.storage import UPLOAD_DIR
 from app.models.candidate_profile import CandidateProfile
 
 
@@ -164,6 +163,24 @@ def test_hr_job_creation_derives_company_from_owner_membership(client, hr_header
     assert response.json()["status"] == "draft"
 
 
+def test_multiple_active_company_memberships_are_not_silently_resolved(
+    client, hr_headers, hr_user, hr_company, company_factory, membership_factory,
+):
+    another_company = company_factory(hr_user)
+    membership_factory(another_company, hr_user)
+
+    company = client.get("/companies/me", headers=hr_headers)
+    job = client.post("/api/jobs", headers=hr_headers, json={
+        "title": "Role", "description": "Build products.", "location": "Remote",
+        "work_mode": "remote", "employment_type": "full_time", "experience_level": "entry",
+        "skills": [], "status": "draft",
+    })
+
+    assert company.status_code == 409
+    assert "more than one active company membership" in company.json()["detail"]
+    assert job.status_code == 409
+
+
 def test_hr_can_create_a_published_job(client, hr_headers, hr_user):
     client.post("/companies/", headers=hr_headers, json={
         "name": "Published job company", "description": "Company for a public role.",
@@ -204,18 +221,23 @@ def test_hr_review_lists_candidate_profile_and_resume_metadata(client, hr_header
     assert item["id"] == str(application.id)
 
 
-def test_recruiter_can_download_resume_for_managed_application(client, hr_headers, hr_company, hr_user, candidate_user, job_factory, application_factory, db):
+def test_recruiter_can_download_resume_for_managed_application(client, hr_headers, hr_company, hr_user, candidate_user, job_factory, application_factory, db, monkeypatch):
+    import io
+    import app.services.application_service as application_service
+
     job = job_factory(hr_company, hr_user)
     application = application_factory(job, candidate_user)
-    path = UPLOAD_DIR / "test-recruiter-download.pdf"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"resume bytes")
-    application.resume.file_url = str(path)
+    application.resume.file_url = "resumes/candidate/test.pdf"
     db.flush()
+
+    async def fake_download(key):
+        assert key == "resumes/candidate/test.pdf"
+        return io.BytesIO(b"resume bytes")
+
+    monkeypatch.setattr(application_service, "download_resume", fake_download)
     response = client.get(f"/api/applications/{application.id}/resume", headers=hr_headers)
     assert response.status_code == 200
     assert response.content == b"resume bytes"
-    path.unlink(missing_ok=True)
 
 
 def test_hr_cannot_read_applicant_details_for_unmanaged_company(client, hr_headers, hr_user, admin_user, company_factory, job_factory, candidate_user, application_factory):

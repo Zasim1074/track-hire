@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
+from urllib.parse import quote
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user, get_db, require_roles
@@ -18,6 +19,7 @@ from app.schemas.application import (
     ApplicantReviewListResponse,
 )
 from app.services import application_service
+from app.core.storage import stream_object
 
 router = APIRouter()
 db_dependency = Depends(get_db)
@@ -42,9 +44,13 @@ def get_job_applicant_reviews(job_id: UUID, application_status: ApplicationStatu
 
 
 @router.get("/applications/{application_id}/resume")
-def download_application_resume(application_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
-    path, filename = application_service.get_application_resume_path(db, application_id, current_user)
-    return FileResponse(path, filename=filename, media_type="application/octet-stream")
+async def download_application_resume(application_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
+    body, filename = await application_service.get_application_resume_download(db, application_id, current_user)
+    return StreamingResponse(
+        stream_object(body),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename, safe='')}"},
+    )
 
 
 @router.get("/applications/me", dependencies=[candidate_dependency], response_model=ApplicationListResponse, status_code=status.HTTP_200_OK)

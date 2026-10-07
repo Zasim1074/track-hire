@@ -7,6 +7,11 @@ class Settings(BaseSettings):
     algorithm: str
     secret_key: str
     access_token_expire_minutes: int
+    r2_account_id: str | None = None
+    r2_access_key_id: str | None = None
+    r2_secret_access_key: str | None = None
+    r2_bucket_name: str | None = None
+    r2_endpoint_url: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

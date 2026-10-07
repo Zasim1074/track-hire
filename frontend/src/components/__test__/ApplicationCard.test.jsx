@@ -8,13 +8,16 @@ const applicationApi = vi.hoisted(() => ({
   rejectApplication: vi.fn(),
   withdrawApplication: vi.fn(),
   downloadApplicantResume: vi.fn(),
+  getApplicationHistory: vi.fn(),
 }));
+const interviewApi = vi.hoisted(() => ({ getApplicationInterviews: vi.fn() }));
 vi.mock("@/auth/AuthContext", () => ({ useAuth: () => authState }));
 vi.mock("@/services/apiApplications", () => applicationApi);
+vi.mock("@/services/apiInterviews", () => interviewApi);
 vi.mock("@/components/InterviewPanel", () => ({
   default: () => <div>Interview workflow</div>,
 }));
-import ApplicationCard from "./ApplicationCard";
+import ApplicationCard from "../ApplicationCard";
 
 const app = {
   id: "app-1",
@@ -31,6 +34,7 @@ const app = {
 describe("application review card", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    interviewApi.getApplicationInterviews.mockResolvedValue([{ id: "i1", status: "completed" }]);
   });
 
   it("shows candidate details and permits the interview decision flow", async () => {
@@ -39,7 +43,7 @@ describe("application review card", () => {
     render(<ApplicationCard application={app} />);
     expect(screen.getByText("Ava Candidate")).toBeTruthy();
     expect(screen.getByText("Engineer")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Select candidate" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Select candidate" }));
     await waitFor(() =>
       expect(screen.getByText("Status: Selected")).toBeTruthy(),
     );

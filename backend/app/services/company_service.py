@@ -8,6 +8,8 @@ from app.core.exceptions import (
     CompanyAlreadyExistsError,
     CompanyNotFoundError,
     ForbiddenError,
+    CompanyMembershipExistsError,
+    MultipleCompanyMembershipsError,
 )
 from app.models.company import Company, CompanySize, Industry
 from app.models.company_membership import CompanyMembership, MembershipRole
@@ -29,6 +31,9 @@ from app.schemas.company import (
 
 
 def create_company(db: Session, current_user: User, payload: CompanyCreate) -> dict:
+    existing_membership_company = get_primary_company_for_user(db, current_user)
+    if existing_membership_company is not None:
+        raise CompanyMembershipExistsError
     existing_company = get_company_by_website(db, payload.website)
 
     if existing_company is not None:

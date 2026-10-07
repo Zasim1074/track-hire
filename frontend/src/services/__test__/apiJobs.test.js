@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getJobs } from "./apiJobs";
+import { getJobs } from "../apiJobs";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -24,17 +24,16 @@ describe("job listing API adapter", () => {
     expect(fetchMock.mock.calls[0][0]).toContain("search=engineer");
   });
 
-  it("loads all pages before applying client-side filters", async () => {
+  it("uses a single bounded response page and filters that page", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: 1, location: "Remote" }], total_pages: 2 }), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: 2, location: "Hybrid" }], total_pages: 2 }), { status: 200, headers: { "Content-Type": "application/json" } }));
+      .mockResolvedValue(new Response(JSON.stringify({ items: [{ id: 1, location: "Remote" }, { id: 2, location: "Hybrid" }], total_pages: 12 }), { status: 200, headers: { "Content-Type": "application/json" } }));
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(getJobs({ location: "hybrid" })).resolves.toEqual([
       { id: 2, location: "Hybrid" },
     ]);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1][0]).toContain("page=2");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain("page_size=100");
   });
 });

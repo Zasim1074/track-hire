@@ -23,8 +23,8 @@ const AppliedJobs = () => {
   return (
     <div>
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2  gap-4">
-        {errorAppliedJobs ? <p role="alert">{errorAppliedJobs.message}</p> : dataAppliedJobs?.length ? (
-          dataAppliedJobs.map((application) => {
+        {errorAppliedJobs ? <p role="alert">{errorAppliedJobs.message}</p> : dataAppliedJobs?.items?.length ? (
+          dataAppliedJobs.items.map((application) => {
             return (
               <ApplicationCard
                 key={application.id}

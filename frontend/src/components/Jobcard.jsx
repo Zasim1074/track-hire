@@ -12,6 +12,8 @@ import { Button } from "./ui/button";
 import { useFetch } from "../services/useFetch";
 import { deleteJob, getSavedJobs } from "../services/apiJobs";
 import { BarLoader } from "react-spinners";
+import { useAuth } from "@/auth/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Jobcard = ({
   job,
@@ -22,6 +24,8 @@ const Jobcard = ({
   const [saved, setSaved] = useState(savedInit);
   const [saveError, setSaveError] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { fn: fnDeleteJob, loading: loadingDeleteJob } = useFetch(deleteJob, {
     job_id: job.id,
   });
@@ -41,6 +45,8 @@ const Jobcard = ({
   };
 
   const toggleSaved = async () => {
+    if (!user) { navigate("/login", { state: { from: { pathname: `/jobs/${job.id}` } } }); return; }
+    if (user.role !== "candidate") return;
     setSaveError("");
     try {
       await fnSaveJob({ alreadySaved: saved });
@@ -67,7 +73,9 @@ const Jobcard = ({
               variant="ghost"
               size="icon"
               aria-label={`Delete ${job.title}`}
-              onClick={handleDeleteJob}
+              onClick={() => {
+                if (window.confirm(`Delete “${job.title}”? This cannot be undone.`)) handleDeleteJob();
+              }}
               disabled={loadingDeleteJob}
             >
               <Trash2Icon fill="red" size={18} className="text-red-300" />
@@ -103,7 +111,7 @@ const Jobcard = ({
           </Button>
         </Link>
 
-        <Button
+        {(user?.role === "candidate" || !user) && <Button
           variant="outline"
           className="w-14 transition-all duration-300 hover:scale-110"
           onClick={toggleSaved}
@@ -117,7 +125,7 @@ const Jobcard = ({
             fill={saved ? "violet" : "transparent"}
             className="transition-all duration-300"
           />
-        </Button>
+        </Button>}
       </CardFooter>
       {saveError && <p role="alert" className="px-5 pb-3 text-sm text-red-500">{saveError}</p>}
       {deleteError && <p role="alert" className="px-5 pb-3 text-sm text-red-500">{deleteError}</p>}

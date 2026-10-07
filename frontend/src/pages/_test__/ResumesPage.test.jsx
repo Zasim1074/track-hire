@@ -9,7 +9,7 @@ const resumeApi = vi.hoisted(() => ({
   downloadResume: vi.fn(),
 }));
 vi.mock("@/services/apiResumes", () => resumeApi);
-import ResumesPage from "./ResumesPage";
+import ResumesPage from "../ResumesPage";
 
 describe("resume management screen", () => {
   beforeEach(() => vi.clearAllMocks());

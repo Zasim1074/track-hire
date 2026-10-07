@@ -6,22 +6,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getHiringStatus, getSingleJob } from "@/services/apiJobs";
-import { getCompany } from "@/services/apiCompanies";
+import { getHiringStatus, getSingleJob, getSavedJobs, fetchSavedJobs } from "@/services/apiJobs";
 import { useFetch } from "@/services/useFetch";
 import { useAuth } from "@/auth/AuthContext";
-import MDEditor from "@uiw/react-md-editor";
 import { Briefcase, DoorClosed, DoorOpen, MapPinIcon } from "lucide-react";
 import React, { useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { BarLoader } from "react-spinners";
 import ApplyJobDrawer from "@/components/ApplyJobDrawer";
 import ApplicationCard from "@/components/ApplicationCard";
 import { getJobApplications, getAppliedJobs } from "@/services/apiApplications";
+import { Button } from "@/components/ui/button";
 
 const Job = () => {
   const { user, loading: authLoading } = useAuth();
   const { id } = useParams();
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const {
     fn: fnJob,
@@ -35,22 +38,37 @@ const Job = () => {
     loading: loadingHiringStatus,
     error: errorHiringStatus,
   } = useFetch(getHiringStatus, { job_id: id });
-  const { fn: fnCompany, data: company } = useFetch(getCompany);
   const { fn: fnApplications, data: applications, error: applicationsError, loading: applicationsLoading } = useFetch(getJobApplications);
-  const { fn: fnMyApplications, data: myApplications } = useFetch(getAppliedJobs);
+  const { fn: fnMyApplications, data: myApplications, loading: loadingMyApplications, error: myApplicationsError } = useFetch(getAppliedJobs);
 
   useEffect(() => {
     fnJob().catch(() => {});
   }, [id, fnJob]);
 
   useEffect(() => {
-    if (dataJob?.company_id) fnCompany({ company_id: dataJob.company_id }).catch(() => {});
-  }, [dataJob?.company_id, fnCompany]);
+    if (dataJob && (user?.role === "hr" || user?.role === "admin")) fnApplications({ job_id: dataJob.id }).catch(() => {});
+  }, [dataJob, user?.role, fnApplications]);
 
   useEffect(() => {
-    if (dataJob && (user?.role === "hr" || user?.role === "admin")) fnApplications({ job_id: dataJob.id }).catch(() => {});
-    if (dataJob && user?.role === "candidate") fnMyApplications().catch(() => {});
-  }, [dataJob, user?.role, fnApplications, fnMyApplications]);
+    if (user?.role === "candidate") fnMyApplications().catch(() => {});
+  }, [user?.role, fnMyApplications]);
+
+  useEffect(() => {
+    setSaved(false);
+    if (!dataJob?.id || user?.role !== "candidate") return;
+    let active = true;
+    fetchSavedJobs().then((items) => {
+      if (active) setSaved(items.some((item) => item.job_id === dataJob.id));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [dataJob?.id, user?.role]);
+
+  const toggleSaved = async () => {
+    setSaving(true); setSaveError("");
+    try { await getSavedJobs({ job_id: dataJob.id, alreadySaved: saved }); setSaved((value) => !value); }
+    catch (error) { setSaveError(error.message); }
+    finally { setSaving(false); }
+  };
 
   const handleStatusChange = (value) => {
     const isOpen = value === "open";
@@ -75,10 +93,10 @@ const Job = () => {
             <h1 className="gradient-title font-extrabold pb-3 text-4xl sm:text-5xl">
               {dataJob?.title}
             </h1>
-            {company?.logo_url && (
+            {dataJob.company?.logo_url && (
               <div>
                 <img
-                  src={company.logo_url}
+                  src={dataJob.company.logo_url}
                   className="h-12"
                   alt={dataJob.title}
                 />
@@ -92,7 +110,7 @@ const Job = () => {
               {dataJob?.location}
             </div>
 
-            {user?.role === "candidate" && (
+              {user?.role === "candidate" && (
               <div className="flex gap-2">
               {dataJob?.status === "published" ? (
                   <div className="flex felx-row">
@@ -107,11 +125,11 @@ const Job = () => {
               </div>
             )}
 
-            <div className="flex gap-2">
+            {(user?.role === "hr" || user?.role === "admin") && <div className="flex gap-2">
               {<Briefcase />}
-              {applications?.length ?? "—"}
+              {applications?.total ?? "—"}
               {"  "}Applicants
-            </div>
+            </div>}
           </div>
 
           {/* hiring status */}
@@ -143,23 +161,23 @@ const Job = () => {
 
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl sm:text-3xl font-bold">Requirements: </h2>
-            <MDEditor.Markdown
-              source={(dataJob?.skills || []).join(", ") || "No listed requirements"}
-              className="bg-transparent sm:text-lg"
-            />
+            {dataJob?.skills?.length ? <ul className="flex flex-wrap gap-2">{dataJob.skills.map((skill) => <li key={skill} className="rounded-full border px-3 py-1 text-sm">{skill}</li>)}</ul> : <p className="text-muted-foreground">No listed requirements</p>}
           </div>
 
           {/* Application -> Recruiter */}
 
           {user?.role === "candidate" && (
-            <ApplyJobDrawer
+            <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={saving} onClick={toggleSaved}>{saving ? "Saving…" : saved ? "Remove saved job" : "Save job"}</Button><ApplyJobDrawer
               className="w-full items-center"
               dataJob={dataJob}
               user={user}
               fetchJob={fnJob}
-              applied={myApplications?.some((appli) => appli.job_id === dataJob.id)}
-            />
+              applied={myApplications?.items?.some((appli) => appli.job_id === dataJob.id)}
+              checkingApplication={loadingMyApplications}
+            /></div>
           )}
+          {myApplicationsError && user?.role === "candidate" && <p className="text-xs text-muted-foreground">Application status could not be checked; the server will validate duplicate applications.</p>}
+          {saveError && <p role="alert" className="text-red-500">{saveError}</p>}
 
           {(user?.role === "hr" || user?.role === "admin") && (
             <div className="flex flex-col gap-2">
@@ -170,8 +188,8 @@ const Job = () => {
               {applicationsLoading && <BarLoader className="mb-4" width="100%" color="#85D055" />}
               {applicationsError && <p role="alert" className="text-red-500">{applicationsError.message}</p>}
               <div className="grid md:grid-cols-2 gap-4">
-                {applications?.length > 0 ? (
-                  applications.map((appli) => (
+                {applications?.items?.length > 0 ? (
+                  applications.items.map((appli) => (
                     <ApplicationCard key={appli.id} application={appli} />
                   ))
                 ) : (

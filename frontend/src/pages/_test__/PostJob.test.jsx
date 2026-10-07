@@ -16,7 +16,7 @@ vi.mock("@/services/apiCompanies", () => companyApi);
 vi.mock("@/auth/AuthContext", () => ({ useAuth: auth.useAuth }));
 vi.mock("@/components/CompanySetupForm", () => ({ default: () => <p>COMPANY_SETUP_FORM</p> }));
 
-import PostJob from "./PostJob";
+import PostJob from "../PostJob";
 
 const longDescription = "Build reliable APIs and work closely with product and design teams. ".repeat(4);
 const job = {

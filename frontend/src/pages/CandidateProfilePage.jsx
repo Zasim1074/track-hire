@@ -46,6 +46,7 @@ export default function CandidateProfilePage() {
   };
 
   if (loading) return <p role="status" className="mt-8">Loading profile…</p>;
+  if (error && !exists) return <Card className="mx-auto mt-8 max-w-3xl"><CardContent className="space-y-3 p-6"><p role="alert" className="text-red-500">Unable to load your profile: {error}</p><Button variant="outline" onClick={refresh}>Try again</Button></CardContent></Card>;
   return <Card className="mx-auto mt-8 max-w-3xl">
     <CardHeader><CardTitle>Candidate Profile</CardTitle></CardHeader>
     <CardContent>

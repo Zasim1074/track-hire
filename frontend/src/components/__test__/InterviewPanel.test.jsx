@@ -15,7 +15,7 @@ const auth = vi.hoisted(() => ({ useAuth: vi.fn() }));
 vi.mock("@/services/apiInterviews", () => interviewApi);
 vi.mock("@/auth/AuthContext", () => ({ useAuth: auth.useAuth }));
 
-import InterviewPanel from "./InterviewPanel";
+import InterviewPanel from "../InterviewPanel";
 
 const scheduledInterview = {
   id: "interview-1",
@@ -45,8 +45,14 @@ describe("InterviewPanel", () => {
     interviewApi.scheduleInterview.mockResolvedValue(scheduledInterview);
     interviewApi.updateInterview.mockResolvedValue(scheduledInterview);
     interviewApi.interviewAction.mockResolvedValue(completedInterview);
-    interviewApi.getInterviewFeedback.mockRejectedValue({ status: 404, message: "No feedback" });
-    interviewApi.submitInterviewFeedback.mockResolvedValue({ rating: 5, recommendation: "strong_hire" });
+    interviewApi.getInterviewFeedback.mockRejectedValue({
+      status: 404,
+      message: "No feedback",
+    });
+    interviewApi.submitInterviewFeedback.mockResolvedValue({
+      rating: 5,
+      recommendation: "strong_hire",
+    });
   });
 
   it("schedules an interview and shows its round after refresh", async () => {
@@ -60,36 +66,53 @@ describe("InterviewPanel", () => {
     fireEvent.change(screen.getByLabelText("Interview date and time"), {
       target: { value: "2030-01-15T11:00" },
     });
-    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
+    await user.click(
+      screen.getByRole("button", { name: "Schedule interview" }),
+    );
 
-    await waitFor(() => expect(interviewApi.scheduleInterview).toHaveBeenCalledWith(
-      "application-1",
-      expect.objectContaining({
-        interviewer_id: "hr-1",
-        duration_minutes: 45,
-        interview_type: "video",
-      }),
-    ));
-    expect(await screen.findByText(/Round 1 · technical · scheduled/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(interviewApi.scheduleInterview).toHaveBeenCalledWith(
+        "application-1",
+        expect.objectContaining({
+          interviewer_id: "hr-1",
+          duration_minutes: 45,
+          interview_type: "video",
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText(/Round 1 · technical · scheduled/),
+    ).toBeInTheDocument();
   });
 
   it("updates the interview time and supports the no-show action", async () => {
     const user = userEvent.setup();
-    interviewApi.getApplicationInterviews.mockResolvedValue([scheduledInterview]);
+    interviewApi.getApplicationInterviews.mockResolvedValue([
+      scheduledInterview,
+    ]);
     renderPanel();
 
-    await user.click(await screen.findByRole("button", { name: "Update schedule" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Update schedule" }),
+    );
     fireEvent.change(screen.getByLabelText("Updated interview date and time"), {
       target: { value: "2030-01-16T12:30" },
     });
     await user.click(screen.getByRole("button", { name: "Save schedule" }));
-    await waitFor(() => expect(interviewApi.updateInterview).toHaveBeenCalledWith(
-      "interview-1",
-      expect.objectContaining({ duration_minutes: 45 }),
-    ));
+    await waitFor(() =>
+      expect(interviewApi.updateInterview).toHaveBeenCalledWith(
+        "interview-1",
+        expect.objectContaining({ duration_minutes: 45 }),
+      ),
+    );
 
     await user.click(screen.getByRole("button", { name: "Mark no-show" }));
-    await waitFor(() => expect(interviewApi.interviewAction).toHaveBeenCalledWith("interview-1", "no-show"));
+    await waitFor(() =>
+      expect(interviewApi.interviewAction).toHaveBeenCalledWith(
+        "interview-1",
+        "no-show",
+      ),
+    );
   });
 
   it("completes an interview and submits interviewer feedback", async () => {
@@ -106,10 +129,14 @@ describe("InterviewPanel", () => {
     });
     await user.click(screen.getByRole("button", { name: "Submit feedback" }));
 
-    await waitFor(() => expect(interviewApi.submitInterviewFeedback).toHaveBeenCalledWith(
-      "interview-1",
-      expect.objectContaining({ rating: 3, recommendation: "strong_hire" }),
-    ));
-    expect(await screen.findByText(/Feedback submitted: strong hire · 5\/5/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(interviewApi.submitInterviewFeedback).toHaveBeenCalledWith(
+        "interview-1",
+        expect.objectContaining({ rating: 3, recommendation: "strong_hire" }),
+      ),
+    );
+    expect(
+      await screen.findByText(/Feedback submitted: strong hire · 5\/5/),
+    ).toBeInTheDocument();
   });
 });

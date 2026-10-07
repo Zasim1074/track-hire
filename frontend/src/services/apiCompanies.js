@@ -5,10 +5,15 @@ export async function getCompanies() {
   return result.items || [];
 }
 
-export const getCompany = ({ company_id }) => apiRequest(`/companies/${company_id}`);
+export const getCompany = ({ company_id }) =>
+  apiRequest(`/companies/${company_id}`);
 export const getMyCompany = () => apiRequest("/companies/me", { auth: true });
 
 export async function addNewCompany(company) {
-  const result = await apiRequest("/companies/", { method: "POST", body: company, auth: true });
+  const result = await apiRequest("/companies/", {
+    method: "POST",
+    body: company,
+    auth: true,
+  });
   return result.details || result;
 }

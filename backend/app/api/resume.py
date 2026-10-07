@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
+from urllib.parse import quote
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user
@@ -9,6 +10,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.resume import ResumeResponse
 from app.services import resume_service
+from app.core.storage import stream_object
 
 router = APIRouter()
 
@@ -28,9 +30,13 @@ def get_resume(resume_id: UUID, db: Session = db_dependency, current_user: User 
 
 
 @router.get("/{resume_id}/download")
-def download_resume(resume_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
-    path, filename = resume_service.get_resume_path(db, resume_id, current_user)
-    return FileResponse(path, filename=filename, media_type="application/octet-stream")
+async def download_resume(resume_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
+    body, filename = await resume_service.get_resume_download(db, resume_id, current_user)
+    return StreamingResponse(
+        stream_object(body),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename, safe='')}"},
+    )
 
 
 @router.post("", response_model=ResumeResponse, status_code=status.HTTP_201_CREATED)
@@ -39,8 +45,8 @@ async def upload_resume(file: UploadFile = file_dependency, db: Session = db_dep
 
 
 @router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT,)
-def delete_resume(resume_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
-    resume_service.delete_resume(db, resume_id, current_user)
+async def delete_resume(resume_id: UUID, db: Session = db_dependency, current_user: User = user_dependency):
+    await resume_service.delete_resume(db, resume_id, current_user)
     
     
 @router.patch("/{resume_id}/default", response_model=ResumeResponse)

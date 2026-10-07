@@ -1,5 +1,4 @@
 import math
-from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -44,7 +43,7 @@ from app.schemas.application import (
     ApplicantReviewListResponse,
 )
 from app.schemas.candidate_profile import CandidateProfileResponse
-from app.core.storage import UPLOAD_DIR
+from app.core.storage import download_resume
 
 
 def apply_for_job(
@@ -358,7 +357,7 @@ def get_application(
     return ApplicationResponse.model_validate(application)
 
 
-def get_application_resume_path(db: Session, application_id: UUID, current_user: User) -> tuple[Path, str]:
+async def get_application_resume_download(db: Session, application_id: UUID, current_user: User):
     application = get_by_id(db, application_id)
     if application is None:
         raise ApplicationNotFoundError
@@ -366,10 +365,7 @@ def get_application_resume_path(db: Session, application_id: UUID, current_user:
     resume = get_resume_by_id(db, application.resume_id)
     if resume is None:
         raise ResumeNotFoundError
-    path = Path(resume.file_url).resolve()
-    if not path.is_relative_to(UPLOAD_DIR.resolve()) or not path.is_file():
-        raise ResumeNotFoundError
-    return path, resume.file_name
+    return await download_resume(resume.file_url), resume.file_name
 
 
 def select_application(

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiRequest, getAccessToken, setAccessToken } from "./apiClient";
-import { login } from "./apiAuth";
+import { apiRequest, getAccessToken, setAccessToken } from "../apiClient";
+import { login } from "../apiAuth";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -87,5 +87,21 @@ describe("FastAPI client", () => {
 
     await apiRequest("/resumes", { method: "POST", body, auth: true });
     expect(fetch.mock.calls[0][1].headers.has("Content-Type")).toBe(false);
+  });
+
+  it("shares in-flight GET requests but does not cache completed responses", async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ items: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await Promise.all([apiRequest("/jobs"), apiRequest("/jobs")]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await apiRequest("/jobs");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
