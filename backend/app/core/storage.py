@@ -4,11 +4,10 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import anyio
-from fastapi import UploadFile
-from supabase import create_client
-
 from app.core.config import settings
 from app.core.exceptions import ObjectStorageError, ResumeNotFoundError
+from fastapi import UploadFile
+from supabase import create_client
 
 
 def _storage_bucket() -> Any:

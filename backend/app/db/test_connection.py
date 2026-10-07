@@ -1,7 +1,6 @@
+from app.db.session import engine
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-
-from app.db.session import engine
 
 try:
     with engine.connect() as connection:
