@@ -26,7 +26,10 @@ def get_by_id(db: Session, application_id: UUID) -> Application | None:
 
 
 def get_by_job_and_candidate(db: Session, job_id: UUID, candidate_id: UUID) -> Application | None:
-    stmt = select(Application).where(Application.job_id == job_id and Application.candidate_id == candidate_id)
+    stmt = select(Application).where(
+        Application.job_id == job_id,
+        Application.candidate_id == candidate_id,
+    )
     return db.scalar(stmt)
 
 

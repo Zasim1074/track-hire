@@ -8,7 +8,7 @@ TrackHire is a job search and recruiting application built with React, FastAPI, 
 
 - Register and sign in with email and password.
 - Browse and filter published jobs.
-- Save jobs, apply with a resume and cover letter, and track application status/history.
+- Save jobs, apply to different postings with a resume and cover letter, and track application status/history. Duplicate applications to the same posting are blocked.
 - Manage a candidate profile, upload or remove resumes, choose a default resume, and download files.
 - View interview details and feedback.
 
