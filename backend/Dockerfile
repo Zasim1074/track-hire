@@ -1,6 +1,6 @@
 
 # Start with an official Python image
-FROM python:3.13.15-slim
+FROM python:3.12-slim
 
 # Keep Python output visible in Docker logs
 ENV PYTHONDONTWRITEBYTECODE=1
