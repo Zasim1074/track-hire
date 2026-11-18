@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install PostgreSQL client library required by psycopg
-RUN apt-get update && apt-get install -y --no-install-recommends libpq5 \ 
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install backend dependencies
@@ -24,4 +24,4 @@ COPY . .
 EXPOSE 8000
 
 # Start the FastAPI application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port \"${PORT:-8000}\""]
