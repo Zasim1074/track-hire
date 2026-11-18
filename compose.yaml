@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:17
+    container_name: track_hire_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+  migrate:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}@db:5432/${POSTGRES_DB}
+    command: alembic upgrade head
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  api:
+    build:
+      context: ./backend
+    container_name: trackhire-api
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}@db:5432/${POSTGRES_DB}
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+volumes:
+  postgres_data:

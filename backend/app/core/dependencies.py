@@ -1,10 +1,5 @@
 from uuid import UUID
 
-from fastapi import Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-
 from app.core.config import settings
 from app.core.exceptions import (
     CompanyNotFoundError,
@@ -20,6 +15,10 @@ from app.models.user import User, UserRole
 from app.repositories.company_membership_repository import get_active_membership
 from app.repositories.company_repository import get_company_by_id
 from app.repositories.user_repository import get_by_id
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 security = HTTPBearer()
 security_dependency = Depends(security)

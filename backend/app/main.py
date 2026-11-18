@@ -1,7 +1,3 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.api.application import router as application_router
 from app.api.auth import router as auth_router
 from app.api.candidate_profile import router as candidate_profile_router
@@ -14,6 +10,9 @@ from app.api.resume import router as resume_router
 from app.api.saved_job import router as saved_job_router
 from app.api.user import router as user_router
 from app.core import exceptions, exceptions_handler, logging
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 logging.setup_logging()
 
