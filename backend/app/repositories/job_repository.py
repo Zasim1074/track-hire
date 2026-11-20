@@ -60,6 +60,7 @@ def get_jobs(
     page: int,
     page_size: int,
     search: str | None,
+    location: str | None,
     status: JobStatus | None,
     work_mode: WorkMode | None,
     employment_type: EmploymentType | None,
@@ -73,7 +74,16 @@ def get_jobs(
     stmt = stmt.where(Job.status == JobStatus.PUBLISHED)
 
     if search is not None:
-        stmt = stmt.where(Job.title.ilike(f"%{search}%"))
+        stmt = stmt.join(Company, Job.company_id == Company.id).where(
+            or_(
+                Job.title.ilike(f"%{search}%"),
+                Job.description.ilike(f"%{search}%"),
+                Company.name.ilike(f"%{search}%"),
+            )
+        )
+
+    if location is not None:
+        stmt = stmt.where(Job.location.ilike(f"%{location}%"))
 
     if work_mode is not None:
         stmt = stmt.where(Job.work_mode == work_mode)

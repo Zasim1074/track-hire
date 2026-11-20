@@ -36,7 +36,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = security_depend
         )
 
         user_id = payload.get("sub")
-        if user_id is None:
+        if user_id is None or payload.get("type") != "access":
             raise InvalidCredentialsError
         user_id = UUID(user_id)
 
@@ -61,7 +61,8 @@ def get_current_active_user(current_user: User = user_dependency) -> User:
 
 def require_roles(*required_roles: UserRole):
     def role_checker(current_user: User = user_dependency) -> User:
-        if current_user.role not in required_roles:
+        normalized_roles = {getattr(role, "value", role) for role in required_roles}
+        if current_user.role.value not in normalized_roles:
             raise ForbiddenError
         return current_user
 
@@ -110,7 +111,7 @@ def require_application_access(
             raise ForbiddenError
         return
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(
             db,
             application.job.company_id,
@@ -140,7 +141,7 @@ def require_interview_access(
 
         return
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
 
         require_company_membership(
             db,

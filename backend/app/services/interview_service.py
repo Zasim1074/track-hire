@@ -15,7 +15,6 @@ from app.core.exceptions import (
 )
 from app.models.application import ApplicationStatus
 from app.models.application_history import ApplicationStatusHistory
-from app.models.company_membership import MembershipRole
 from app.models.interview import Interview, InterviewStatus
 from app.models.user import User, UserRole
 from app.repositories.application_repository import get_by_id as get_application_by_id
@@ -50,10 +49,10 @@ def create_interview(db: Session, application_id: UUID, payload: InterviewCreate
     if application is None:
         raise ApplicationNotFoundError
 
-    if current_user.role not in {MembershipRole.HR, UserRole.ADMIN}:
+    if current_user.role not in {UserRole.HR, UserRole.ADMIN}:
         raise ForbiddenError
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(db, application.job.company_id, current_user)
 
     if application.status not in {ApplicationStatus.SHORTLISTED, ApplicationStatus.INTERVIEW}:
@@ -64,7 +63,7 @@ def create_interview(db: Session, application_id: UUID, payload: InterviewCreate
     if interviewer is None:
         raise InterviewerNotFoundError
 
-    if interviewer.role != MembershipRole.HR:
+    if interviewer.role != UserRole.HR:
         raise InterviewerNotEligibleError
 
     require_company_membership(db, application.job.company_id, interviewer)
@@ -132,7 +131,7 @@ def get_application_interviews(db: Session, application_id: UUID, current_user: 
         if application.candidate_id != current_user.id:
             raise ForbiddenError
     # HR → must belong to application's company
-    elif current_user.role == MembershipRole.HR:
+    elif current_user.role == UserRole.HR:
         require_company_membership(db,application.job.company_id, current_user)
     # Admin → allowed
     elif current_user.role == UserRole.ADMIN:
@@ -160,12 +159,12 @@ def update_interview(
         raise InterviewNotFoundError
 
     if current_user.role not in {
-        MembershipRole.HR,
+        UserRole.HR,
         UserRole.ADMIN,
     }:
         raise ForbiddenError
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(
             db,
             interview.application.job.company_id,
@@ -203,7 +202,7 @@ def update_interview(
     if interviewer is None:
         raise InterviewerNotFoundError
 
-    if interviewer.role != MembershipRole.HR:
+    if interviewer.role != UserRole.HR:
         raise InterviewerNotEligibleError
 
     require_company_membership(
@@ -242,11 +241,11 @@ def cancel_interview(db: Session,interview_id: UUID,current_user: User) -> Inter
         raise InterviewNotFoundError
 
     # Only HR/Admin can cancel
-    if current_user.role not in {MembershipRole.HR,UserRole.ADMIN,}:
+    if current_user.role not in {UserRole.HR,UserRole.ADMIN,}:
         raise ForbiddenError
 
     # HR must belong to the company's hiring team
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(db,interview.application.job.company_id,current_user,)
 
     # Only scheduled interviews can be cancelled
@@ -266,10 +265,10 @@ def complete_interview(db: Session,interview_id: UUID,current_user: User) -> Int
     if interview is None:
         raise InterviewNotFoundError
 
-    if current_user.role not in {MembershipRole.HR,UserRole.ADMIN,}:
+    if current_user.role not in {UserRole.HR,UserRole.ADMIN,}:
         raise ForbiddenError
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(db,interview.application.job.company_id,current_user,)
 
     if interview.status != InterviewStatus.SCHEDULED:
@@ -288,10 +287,10 @@ def no_show_interview(db: Session,interview_id: UUID,current_user: User) -> Inte
     if interview is None:
         raise InterviewNotFoundError
 
-    if current_user.role not in {MembershipRole.HR,UserRole.ADMIN,}:
+    if current_user.role not in {UserRole.HR,UserRole.ADMIN,}:
         raise ForbiddenError
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(db,interview.application.job.company_id,current_user,)
 
     if interview.status != InterviewStatus.SCHEDULED:

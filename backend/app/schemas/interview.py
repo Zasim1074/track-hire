@@ -6,10 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.models.interview import InterviewStatus, InterviewType
 
 
-@field_validator("scheduled_at")
-@classmethod
-def validate_scheduled_at(cls, value: datetime) -> datetime:
-
+def validate_scheduled_at_value(value: datetime) -> datetime:
     if value.tzinfo is None:
         raise ValueError("scheduled_at must include timezone information")
 
@@ -30,6 +27,8 @@ class InterviewCreate(BaseModel):
     interview_type: InterviewType
     notes: str | None = None
 
+    _validate_scheduled_at = field_validator("scheduled_at")(validate_scheduled_at_value)
+
 
 class InterviewUpdate(BaseModel):
     interviewer_id: uuid.UUID | None = None
@@ -42,6 +41,8 @@ class InterviewUpdate(BaseModel):
     meeting_url: str | None = None
     interview_type: InterviewType | None = None
     notes: str | None = None
+
+    _validate_scheduled_at = field_validator("scheduled_at")(validate_scheduled_at_value)
 
 
 class InterviewResponse(BaseModel):

@@ -9,8 +9,8 @@ from app.models.interview import Interview, InterviewStatus
 
 def as_utc_naive(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value
-    return value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def create(

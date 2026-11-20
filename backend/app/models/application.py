@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Text, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Text, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -40,6 +40,8 @@ class Application(Base):
             "candidate_id",
             name="un_application_job_candidate",
         ),
+        Index("ix_applications_candidate_status", "candidate_id", "status"),
+        Index("ix_applications_job_status", "job_id", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True,default=uuid.uuid4)

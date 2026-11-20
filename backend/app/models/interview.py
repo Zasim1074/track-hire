@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, Text, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,7 +36,12 @@ class InterviewStatus(str, Enum):
 
 class Interview(Base):
     __tablename__ = "interviews"
-    __table_args__ = (UniqueConstraint("application_id", "round_number", name="uq_interview_application_round"),)
+    __table_args__ = (
+        UniqueConstraint("application_id", "round_number", name="uq_interview_application_round"),
+        CheckConstraint("round_number > 0", name="ck_interviews_round_positive"),
+        CheckConstraint("duration_minutes > 0 AND duration_minutes <= 480", name="ck_interviews_duration"),
+        Index("ix_interviews_interviewer_schedule", "interviewer_id", "scheduled_at", "status"),
+    )
     
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True,default=uuid.uuid4)
     status: Mapped[InterviewStatus] = mapped_column(SQLEnum(InterviewStatus, name="interview_status"), nullable=False, default=InterviewStatus.SCHEDULED)
@@ -47,7 +52,7 @@ class Interview(Base):
     interviewer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     interviewer: Mapped["User"] = relationship("User", foreign_keys=[interviewer_id],back_populates="interviews")
     
-    scheduled_at: Mapped[datetime] = mapped_column(DateTime,nullable=False)
+    scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
     round_number: Mapped[int] = mapped_column(Integer, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer,nullable=False)
     notes: Mapped[str | None] = mapped_column(Text,nullable=True)

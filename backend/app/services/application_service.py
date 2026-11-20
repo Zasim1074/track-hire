@@ -18,7 +18,6 @@ from app.core.exceptions import (
 )
 from app.models.application import Application, ApplicationStatus
 from app.models.application_history import ApplicationStatusHistory
-from app.models.company_membership import MembershipRole
 from app.models.interview import InterviewStatus
 from app.models.job import JobStatus
 from app.models.user import User, UserRole
@@ -383,12 +382,12 @@ def select_application(
         raise ApplicationNotFoundError
 
     if current_user.role not in {
-        MembershipRole.HR,
+        UserRole.HR,
         UserRole.ADMIN,
     }:
         raise ForbiddenError
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(
             db,
             application.job.company_id,
@@ -448,12 +447,12 @@ def reject_application(
         raise ApplicationNotFoundError
 
     if current_user.role not in {
-        MembershipRole.HR,
+        UserRole.HR,
         UserRole.ADMIN,
     }:
         raise ForbiddenError
 
-    if current_user.role == MembershipRole.HR:
+    if current_user.role == UserRole.HR:
         require_company_membership(
             db,
             application.job.company_id,

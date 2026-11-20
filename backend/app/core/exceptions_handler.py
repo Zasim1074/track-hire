@@ -13,7 +13,11 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"detail": "Request validation failed.", "errors": exc.errors()})
+    errors = []
+    for issue in exc.errors():
+        sanitized = {key: value for key, value in issue.items() if key != "ctx"}
+        errors.append(sanitized)
+    return JSONResponse(status_code=422, content={"detail": "Request validation failed.", "errors": errors})
 
 
 async def http_exception_handler(request: Request, exc: HTTPException):

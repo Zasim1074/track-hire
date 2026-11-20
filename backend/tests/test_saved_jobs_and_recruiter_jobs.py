@@ -89,7 +89,7 @@ def test_register_can_choose_candidate_or_hr_but_not_admin(client):
     for role in ("candidate", "hr"):
         response = client.post("/auth/register", json={
             "email": f"{role}-register@example.test",
-            "password": "correct-horse-battery",
+            "password": "correct-horse-battery-1",
             "first_name": "New",
             "last_name": "Account",
             "role": role,
@@ -99,7 +99,7 @@ def test_register_can_choose_candidate_or_hr_but_not_admin(client):
 
     denied = client.post("/auth/register", json={
         "email": "admin-register@example.test",
-        "password": "correct-horse-battery",
+        "password": "correct-horse-battery-1",
         "first_name": "New",
         "last_name": "Admin",
         "role": "admin",

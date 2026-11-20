@@ -86,6 +86,29 @@ def test_hr_from_another_company_cannot_schedule_interview(
     assert response.json()["detail"] == "You don't have enough permissions."
 
 
+def test_interview_schedule_requires_future_timezone_aware_datetime(
+    client,
+    hr_headers,
+    hr_company,
+    hr_user,
+    candidate_user,
+    job_factory,
+    application_factory,
+):
+    job = job_factory(hr_company, hr_user)
+    application = application_factory(job, candidate_user, status=ApplicationStatus.INTERVIEW)
+    payload = _interview_payload(hr_user.id, datetime.now(timezone.utc) + timedelta(days=1))
+    payload["scheduled_at"] = "2026-01-01T10:00:00"
+
+    response = client.post(
+        f"/interviews/applications/{application.id}",
+        headers=hr_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 422
+
+
 def test_feedback_can_only_be_submitted_once(
     client,
     hr_headers,

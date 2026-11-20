@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +27,7 @@ class Recommendation(str, Enum):
 
 class InterviewFeedback(Base):
     __tablename__ = "interview_feedback"
+    __table_args__ = (CheckConstraint("rating >= 1 AND rating <= 5", name="ck_feedback_rating"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True,default=uuid.uuid4)
     interview_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("interviews.id"), nullable=False,unique=True)

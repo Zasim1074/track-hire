@@ -8,7 +8,6 @@ class ResumeResponse(BaseModel):
     id: uuid.UUID
     candidate_id: uuid.UUID
     file_name: str
-    file_url: str
     is_default: bool
     created_at: datetime
     updated_at: datetime

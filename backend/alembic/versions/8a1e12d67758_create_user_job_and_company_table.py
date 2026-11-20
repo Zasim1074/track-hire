@@ -83,4 +83,11 @@ def downgrade() -> None:
     op.drop_table('jobs')
     op.drop_table('companies')
     op.drop_table('users')
+    op.execute('DROP TYPE IF EXISTS status')
+    op.execute('DROP TYPE IF EXISTS experience_level')
+    op.execute('DROP TYPE IF EXISTS employment_type')
+    op.execute('DROP TYPE IF EXISTS work_mode')
+    op.execute('DROP TYPE IF EXISTS company_size')
+    op.execute('DROP TYPE IF EXISTS industry_name')
+    op.execute('DROP TYPE IF EXISTS user_role')
     # ### end Alembic commands ###

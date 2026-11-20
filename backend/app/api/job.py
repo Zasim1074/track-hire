@@ -9,8 +9,9 @@ from app.db.session import get_db
 from app.models.company_membership import MembershipRole
 from app.models.job import EmploymentType, ExperienceLevel, JobStatus, WorkMode
 from app.models.user import User, UserRole
+from app.schemas.ats import AtsScoreResponse
 from app.schemas.job import JobCreate, JobListResponse, JobResponse, JobUpdate
-from app.services import job_service
+from app.services import ats_service, job_service
 
 router = APIRouter()
 
@@ -26,6 +27,7 @@ status_query = Query(None)
 work_mode_query = Query(None)
 employment_type_query = Query(None)
 experience_level_query = Query(None)
+location_query = Query(None)
 
 
 @router.post("/companies/{company_id}/jobs", dependencies=[hr_admin_required] ,response_model=JobResponse,status_code=status.HTTP_201_CREATED)
@@ -39,8 +41,8 @@ def create_job_for_current_user(payload: JobCreate, current_user: User = user_de
 
 
 @router.get("/jobs", response_model=JobListResponse, status_code=status.HTTP_200_OK)
-def get_jobs(page: int = page_query, page_size: int = page_size_query, search: str | None = search_query, status: JobStatus | None = status_query, work_mode: WorkMode | None = work_mode_query, employment_type: EmploymentType | None = employment_type_query, experience_level: ExperienceLevel | None = experience_level_query, db: Session = db_dependency ):
-    return job_service.get_jobs(db, page, page_size, search, status, work_mode, employment_type, experience_level)
+def get_jobs(page: int = page_query, page_size: int = page_size_query, search: str | None = search_query, location: str | None = location_query, status: JobStatus | None = status_query, work_mode: WorkMode | None = work_mode_query, employment_type: EmploymentType | None = employment_type_query, experience_level: ExperienceLevel | None = experience_level_query, db: Session = db_dependency ):
+    return job_service.get_jobs(db, page, page_size, search, location, status, work_mode, employment_type, experience_level)
 
 
 @router.get("/jobs/me", response_model=JobListResponse)
@@ -60,6 +62,11 @@ def get_job(
 
         current_user = get_current_user(credentials, db)
     return job_service.get_job(db, job_id, current_user)
+
+
+@router.get("/jobs/{job_id}/ats-score", response_model=AtsScoreResponse)
+async def get_ats_score(job_id: UUID, current_user: User = user_dependency, db: Session = db_dependency):
+    return await ats_service.score_default_resume(db, job_id, current_user)
 
 
 @router.patch("/jobs/{job_id}", dependencies=[hr_admin_required],response_model=JobResponse, status_code=status.HTTP_200_OK)

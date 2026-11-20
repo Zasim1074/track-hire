@@ -14,6 +14,11 @@ class UserUpdate(BaseModel):
     is_active: bool
 
 
+class UserNameUpdate(BaseModel):
+    first_name: str
+    last_name: str
+
+
 class UserResponse(BaseModel):
     id: uuid.UUID
     email: str

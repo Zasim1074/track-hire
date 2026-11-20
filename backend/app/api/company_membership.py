@@ -30,10 +30,10 @@ def get_members(company_id:UUID, db:Session=db_dependency, current_user:User=use
 
 
 @router.patch("/member/{member_id}/", dependencies=[hr_admin_dependency], response_model=MembershipResponse, status_code=status.HTTP_200_OK)
-def update_member(membership_id:UUID, payload:MembershipUpdate, db:Session=db_dependency, current_user:User=user_dependency):
-    return company_membership_service.update_member(db, membership_id, payload, current_user)
+def update_member(member_id:UUID, payload:MembershipUpdate, db:Session=db_dependency, current_user:User=user_dependency):
+    return company_membership_service.update_member(db, member_id, payload, current_user)
 
 
 @router.delete("/member/{member_id}", dependencies=[hr_admin_dependency], response_model=None, status_code=status.HTTP_204_NO_CONTENT)
-def delete_member(membership_id:UUID, db:Session=db_dependency, current_user:User=user_dependency):
-    return company_membership_service.remove_member(db, membership_id, current_user)
+def delete_member(member_id:UUID, db:Session=db_dependency, current_user:User=user_dependency):
+    return company_membership_service.remove_member(db, member_id, current_user)

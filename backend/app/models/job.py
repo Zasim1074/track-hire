@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -47,6 +47,15 @@ class JobStatus(str, Enum):
 
 class Job(Base):
     __tablename__ = "jobs"
+    __table_args__ = (
+        CheckConstraint("min_experience >= 0", name="ck_jobs_min_experience_nonnegative"),
+        CheckConstraint("max_experience IS NULL OR max_experience >= min_experience", name="ck_jobs_experience_range"),
+        CheckConstraint("min_salary IS NULL OR min_salary >= 0", name="ck_jobs_min_salary_nonnegative"),
+        CheckConstraint("max_salary IS NULL OR max_salary >= 0", name="ck_jobs_max_salary_nonnegative"),
+        CheckConstraint("min_salary IS NULL OR max_salary IS NULL OR max_salary >= min_salary", name="ck_jobs_salary_range"),
+        Index("ix_jobs_public_listing", "status", "is_active", "created_at"),
+        Index("ix_jobs_company_status", "company_id", "status"),
+    )
     
     id : Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -64,6 +73,7 @@ class Job(Base):
     skills: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     application_deadline:Mapped[datetime | None]= mapped_column(DateTime, default=None, nullable=True)
     status:Mapped[JobStatus] = mapped_column(SQLEnum(JobStatus, name="status"), default=JobStatus.DRAFT, nullable=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id"), nullable=False)

@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import (
@@ -7,13 +8,14 @@ from app.core.exceptions import (
 )
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User, UserRole
-from app.repositories.user_repository import create, get_by_email
+from app.repositories.user_repository import create, get_by_email, update
 from app.schemas.auth import (
     AccessToken,
     LoginRequest,
     LoginResponse,
     RegisterRequest,
     RegisterResponse,
+    ChangePasswordRequest,
 )
 from app.schemas.user import UserResponse
 
@@ -32,7 +34,11 @@ def register(db: Session, payload: RegisterRequest) -> RegisterResponse:
         role=payload.role,
     )
 
-    created_user = create(db, user)
+    try:
+        created_user = create(db, user)
+    except IntegrityError as exc:
+        db.rollback()
+        raise EmailAlreadyExistsError from exc
     return RegisterResponse( detail="User created successfully!", user=UserResponse.model_validate(created_user))
 
 
@@ -54,3 +60,12 @@ def login(db: Session, payload: LoginRequest) -> LoginResponse:
         token=AccessToken(access_token=access_token, token_type="bearer"),
         user=UserResponse.model_validate(user),
     )
+
+
+def change_password(db: Session, user: User, payload: ChangePasswordRequest) -> None:
+    if not verify_password(payload.current_password, user.password_hash):
+        raise InvalidCredentialsError
+    if verify_password(payload.new_password, user.password_hash):
+        raise InvalidCredentialsError
+    user.password_hash = hash_password(payload.new_password)
+    update(db, user)

@@ -1,4 +1,5 @@
 import math
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -46,6 +47,7 @@ def create_job(
         skills=payload.skills,
         application_deadline=payload.application_deadline,
         status=payload.status,
+        published_at=datetime.now(timezone.utc) if payload.status == JobStatus.PUBLISHED else None,
         company_id=company.id,
         created_by=current_user.id,
     )
@@ -66,6 +68,7 @@ def get_jobs(
     page: int,
     page_size: int,
     search: str | None,
+    location: str | None,
     status: JobStatus | None,
     work_mode: WorkMode | None,
     employment_type: EmploymentType | None,
@@ -77,6 +80,7 @@ def get_jobs(
         page,
         page_size,
         search,
+        location,
         status,
         work_mode,
         employment_type,
@@ -130,7 +134,10 @@ def update_job(
 
     require_company_membership(db, job.company_id, current_user)
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    if updates.get("status") == JobStatus.PUBLISHED and job.published_at is None:
+        job.published_at = datetime.now(timezone.utc)
+    for field, value in updates.items():
         setattr(job, field, value)
 
     updated_job = repo_update_job(db, job)
@@ -161,6 +168,8 @@ def publish_job(db: Session, job_id: UUID, current_user: User) -> JobResponse:
         raise ForbiddenError
 
     job.status = JobStatus.PUBLISHED
+    if job.published_at is None:
+        job.published_at = datetime.now(timezone.utc)
     published_job = repo_update_job(db, job)
 
     return JobResponse.model_validate(published_job)

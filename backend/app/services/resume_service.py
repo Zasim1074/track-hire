@@ -24,7 +24,22 @@ from app.repositories.resume_repository import (
 from app.schemas.resume import ResumeResponse
 
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
+ALLOWED_CONTENT_TYPES = {
+    ".pdf": {"application/pdf"},
+    ".doc": {"application/msword", "application/octet-stream"},
+    ".docx": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/zip"},
+}
 MAX_FILE_SIZE = 5 * 1024 * 1024
+
+
+def _has_valid_signature(extension: str, header: bytes) -> bool:
+    if extension == ".pdf":
+        return header.startswith(b"%PDF-")
+    if extension == ".doc":
+        return header.startswith(bytes.fromhex("D0CF11E0A1B11AE1"))
+    if extension == ".docx":
+        return header.startswith(b"PK\x03\x04")
+    return False
 
 
 async def upload_resume(db: Session, file: UploadFile, current_user: User) -> ResumeResponse:
@@ -35,6 +50,14 @@ async def upload_resume(db: Session, file: UploadFile, current_user: User) -> Re
 
     if extension not in ALLOWED_EXTENSIONS:
         raise InvalidResumeFileError
+
+    if file.content_type not in ALLOWED_CONTENT_TYPES[extension]:
+        raise InvalidResumeFileError
+
+    header = await file.read(8)
+    if not _has_valid_signature(extension, header):
+        raise InvalidResumeFileError
+    await file.seek(0)
 
     if file.size is not None:
         too_large = file.size > MAX_FILE_SIZE
