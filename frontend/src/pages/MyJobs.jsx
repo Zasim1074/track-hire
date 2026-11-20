@@ -2,17 +2,14 @@ import AppliedJobs from "@/components/AppliedJobs";
 import PostedJobs from "@/components/PostedJobs";
 import { useAuth } from "@/auth/AuthContext";
 import React from "react";
+import PageHeader from "@/components/PageHeader";
 
 const MyJobs = () => {
   const { user } = useAuth();
 
   return (
     <div>
-      <h1 className="gradient-title font-extrabold pb-3 text-4xl sm:text-5xl">
-        {user?.role === "hr" || user?.role === "admin"
-          ? "My Posted Jobs"
-          : "My Jobs"}
-      </h1>
+      <PageHeader eyebrow={user?.role === "candidate" ? "Candidate workspace" : "Recruiter workspace"} title={user?.role === "hr" || user?.role === "admin" ? "Jobs and applicants" : "Your applications"} description={user?.role === "candidate" ? "Review every application, status update, and interview from one place." : "Manage published roles and open each job to review its applicant pipeline."} />
 
       {user?.role === "hr" || user?.role === "admin" ? (
         <PostedJobs />

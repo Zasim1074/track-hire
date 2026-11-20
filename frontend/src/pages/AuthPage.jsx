@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AuthPage({ mode }) {
@@ -23,7 +24,7 @@ export default function AuthPage({ mode }) {
     password: "",
     first_name: "",
     last_name: "",
-    role: "candidate",
+    role: params.get("role") === "hr" ? "hr" : "candidate",
   });
   if (user)
     return <Navigate to={location.state?.from?.pathname || "/jobs"} replace />;
@@ -56,48 +57,20 @@ export default function AuthPage({ mode }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {location.state?.message && <p role="status" className="mb-4 text-sm text-green-600">{location.state.message}</p>}
           <form className="flex flex-col gap-4" onSubmit={submit}>
             {registering && (
               <>
-                <Input
-                  name="first_name"
-                  autoComplete="given-name"
-                  placeholder="First name"
-                  value={form.first_name}
-                  onChange={update}
-                  required
-                />
-                <Input
-                  name="last_name"
-                  autoComplete="family-name"
-                  placeholder="Last name"
-                  value={form.last_name}
-                  onChange={update}
-                  required
-                />
+                <div className="space-y-2"><Label htmlFor="first_name">First name</Label><Input id="first_name" name="first_name" autoComplete="given-name" placeholder="First name" value={form.first_name} onChange={update} required /></div>
+                <div className="space-y-2"><Label htmlFor="last_name">Last name</Label><Input id="last_name" name="last_name" autoComplete="family-name" placeholder="Last name" value={form.last_name} onChange={update} required /></div>
               </>
             )}
-            <Input
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={update}
-              required
-            />
-            <Input
-              name="password"
-              type="password"
-              autoComplete={registering ? "new-password" : "current-password"}
-              placeholder="Password"
-              value={form.password}
-              onChange={update}
-              minLength={8}
-              required
-            />
+            <div className="space-y-2"><Label htmlFor="email">Email address</Label><Input id="email" name="email" type="email" autoComplete="email" placeholder="Email" value={form.email} onChange={update} required /></div>
+            <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" autoComplete={registering ? "new-password" : "current-password"} placeholder="Password" value={form.password} onChange={update} minLength={registering ? 12 : 1} required /></div>
+            {registering && <p className="-mt-2 text-xs text-muted-foreground">Use at least 12 characters with a letter and a number.</p>}
             {registering && (
-              <select
+              <div className="space-y-2"><Label htmlFor="role">I am joining as</Label><select
+                id="role"
                 className="h-10 rounded-md border bg-background px-3"
                 name="role"
                 value={form.role}
@@ -106,7 +79,7 @@ export default function AuthPage({ mode }) {
               >
                 <option value="candidate">Candidate</option>
                 <option value="hr">HR / Recruiter</option>
-              </select>
+              </select></div>
             )}
             {error && (
               <p role="alert" className="text-sm text-red-500">

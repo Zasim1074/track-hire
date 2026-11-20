@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCandidateProfile, createCandidateProfile, updateCandidateProfile } from "@/services/apiCandidateProfile";
+import { Label } from "@/components/ui/label";
+import PageHeader from "@/components/PageHeader";
 
 const emptyProfile = { phone: "", headline: "", bio: "", location: "", experience_years: "", linkedin_url: "", github_url: "", portfolio_url: "" };
 
@@ -47,22 +49,22 @@ export default function CandidateProfilePage() {
 
   if (loading) return <p role="status" className="mt-8">Loading profile…</p>;
   if (error && !exists) return <Card className="mx-auto mt-8 max-w-3xl"><CardContent className="space-y-3 p-6"><p role="alert" className="text-red-500">Unable to load your profile: {error}</p><Button variant="outline" onClick={refresh}>Try again</Button></CardContent></Card>;
-  return <Card className="mx-auto mt-8 max-w-3xl">
-    <CardHeader><CardTitle>Candidate Profile</CardTitle></CardHeader>
+  return <div className="mx-auto max-w-3xl"><PageHeader eyebrow="Candidate workspace" title="Professional profile" description="Give recruitment teams the context they need when reviewing your application." /><Card>
+    <CardHeader><CardTitle>Profile details</CardTitle></CardHeader>
     <CardContent>
       {error && <p role="alert" className="mb-4 text-red-500">{error}</p>}
       {message && <p role="status" className="mb-4 text-green-500">{message}</p>}
       <form className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
-        <Input name="headline" aria-label="Headline" placeholder="Professional headline" value={profile.headline || ""} onChange={change} />
-        <Input name="phone" aria-label="Phone" placeholder="Phone" value={profile.phone || ""} onChange={change} />
-        <Input name="location" aria-label="Location" placeholder="Location" value={profile.location || ""} onChange={change} />
-        <Input name="experience_years" aria-label="Years of experience" type="number" min="0" placeholder="Years of experience" value={profile.experience_years} onChange={change} />
-        <Textarea className="sm:col-span-2" name="bio" aria-label="About" placeholder="About you" value={profile.bio || ""} onChange={change} />
-        <Input name="linkedin_url" aria-label="LinkedIn URL" placeholder="LinkedIn URL" value={profile.linkedin_url || ""} onChange={change} />
-        <Input name="github_url" aria-label="GitHub URL" placeholder="GitHub URL" value={profile.github_url || ""} onChange={change} />
-        <Input className="sm:col-span-2" name="portfolio_url" aria-label="Portfolio URL" placeholder="Portfolio URL" value={profile.portfolio_url || ""} onChange={change} />
+        <div className="space-y-2"><Label htmlFor="headline">Professional headline</Label><Input id="headline" name="headline" aria-label="Headline" placeholder="Backend engineer" value={profile.headline || ""} onChange={change} /></div>
+        <div className="space-y-2"><Label htmlFor="phone">Phone</Label><Input id="phone" name="phone" aria-label="Phone" placeholder="Phone" value={profile.phone || ""} onChange={change} /></div>
+        <div className="space-y-2"><Label htmlFor="location">Location</Label><Input id="location" name="location" aria-label="Location" placeholder="Location" value={profile.location || ""} onChange={change} /></div>
+        <div className="space-y-2"><Label htmlFor="experience_years">Years of experience</Label><Input id="experience_years" name="experience_years" aria-label="Years of experience" type="number" min="0" placeholder="Years of experience" value={profile.experience_years} onChange={change} /></div>
+        <div className="space-y-2 sm:col-span-2"><Label htmlFor="bio">Professional summary</Label><Textarea id="bio" name="bio" aria-label="About" placeholder="Summarize your experience and the work you want to do." value={profile.bio || ""} onChange={change} /></div>
+        <div className="space-y-2"><Label htmlFor="linkedin_url">LinkedIn URL</Label><Input id="linkedin_url" name="linkedin_url" aria-label="LinkedIn URL" placeholder="LinkedIn URL" value={profile.linkedin_url || ""} onChange={change} /></div>
+        <div className="space-y-2"><Label htmlFor="github_url">GitHub URL</Label><Input id="github_url" name="github_url" aria-label="GitHub URL" placeholder="GitHub URL" value={profile.github_url || ""} onChange={change} /></div>
+        <div className="space-y-2 sm:col-span-2"><Label htmlFor="portfolio_url">Portfolio URL</Label><Input id="portfolio_url" name="portfolio_url" aria-label="Portfolio URL" placeholder="Portfolio URL" value={profile.portfolio_url || ""} onChange={change} /></div>
         <Button className="sm:col-span-2" variant="blue" disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
       </form>
     </CardContent>
-  </Card>;
+  </Card></div>;
 }

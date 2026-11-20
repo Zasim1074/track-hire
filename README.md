@@ -9,7 +9,7 @@ TrackHire is a job search and recruiting application built with React, FastAPI, 
 - Register and sign in with email and password.
 - Browse and filter published jobs.
 - Save jobs, apply to different postings with a resume and cover letter, and track application status/history. Duplicate applications to the same posting are blocked.
-- Manage a candidate profile, upload or remove resumes, choose a default resume, and download files.
+- Manage a candidate profile, upload or remove privately stored resumes, choose a default resume, download files, and change account passwords.
 - View interview details and feedback.
 
 ### Recruiters
@@ -27,7 +27,7 @@ React + Vite ── HTTP + JWT ── FastAPI routers ── services ── rep
                                                    └── SQLAlchemy ── PostgreSQL
 ```
 
-Resume files are stored by the backend under its configured upload directory; the API checks ownership or application access before serving downloads. Alembic manages database changes.
+Resume files are stored outside the public web root under `RESUME_STORAGE_PATH`; the API validates the extension, MIME type, file signature, and size, then checks ownership or application access before serving downloads. Alembic manages database changes.
 
 ## Repository layout
 
@@ -48,7 +48,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Create `backend/.env` from `backend/.env.example` and configure `DATABASE_URL`, `SECRET_KEY`, `ALGORITHM`, and `ACCESS_TOKEN_EXPIRE_MINUTES`. Then run:
+Create `backend/.env` from `backend/.env.example` and configure `DATABASE_URL`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `CORS_ORIGINS`, and `RESUME_STORAGE_PATH`. Then run:
 
 ```bash
 alembic upgrade head
@@ -77,7 +77,10 @@ The Vite server defaults to `http://localhost:5173`. The backend CORS configurat
 | `SECRET_KEY` | Backend | Private JWT signing key |
 | `ALGORITHM` | Backend | JWT signing algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Backend | Access token lifetime |
-| `VITE_API_BASE_URL` | Frontend | FastAPI base URL |
+| `CORS_ORIGINS` | Backend | Comma-separated browser origins allowed to call the API |
+| `RESUME_STORAGE_PATH` | Backend | Private persistent directory for resume objects |
+| `ENVIRONMENT` | Backend | Deployment environment name |
+| `VITE_API_BASE_URL` | Frontend | FastAPI base URL (required for production builds) |
 
 Do not commit populated environment files. Frontend `VITE_` variables are public in the browser bundle and must not contain secrets.
 
@@ -91,6 +94,7 @@ Do not commit populated environment files. Frontend `VITE_` variables are public
 - `/companies` — companies and memberships.
 - `/resumes` — resume records, uploads, and authorized downloads.
 - `/interviews` — interviews and feedback.
+- `/health` — process liveness; `/ready` — database readiness.
 
 ## Checks
 
@@ -110,6 +114,19 @@ npm run build
 npm run lint
 ```
 
+### Local demo data
+
+After applying migrations, populate the local database without deleting existing records:
+
+```bash
+cd backend
+.venv/bin/python scripts/seed_demo_data.py
+```
+
+The repeatable seed creates 8 companies, 48 published jobs, 8 candidates, default resumes, applications, saved jobs, and interviews. Demo credentials are printed when it completes.
+
 ## Deployment
 
-The repository includes Vercel SPA rewrite configuration for the frontend. Backend hosting, production database hosting, and CI/CD are not configured here.
+The repository includes Vercel SPA rewrite configuration for the frontend. Backend hosting, production database hosting, persistent private file storage, TLS, backups, email delivery, monitoring, and CI/CD must be configured by the deployment environment. Run `alembic upgrade head` before starting a new release. The project intentionally does not require Docker.
+
+See [`docs/production-readiness-audit.md`](docs/production-readiness-audit.md) for the capability map, verified improvements, and remaining release blockers.

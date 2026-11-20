@@ -16,6 +16,7 @@ const CandidateProfilePage = lazy(() => import("./pages/CandidateProfilePage"));
 const ResumesPage = lazy(() => import("./pages/ResumesPage"));
 const RoleHome = lazy(() => import("./pages/RoleHome"));
 const ForbiddenPage = lazy(() => import("./pages/ForbiddenPage"));
+const AccountSettings = lazy(() => import("./pages/AccountSettings"));
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { path: "/dashboard", element: <RoleHome /> },
+          { path: "/settings", element: <AccountSettings /> },
           { path: "/jobs/:id", element: <Job /> },
           { element: <ProtectedRoute allowedRoles={["hr", "admin"]} />, children: [
             { path: "/post-job", element: <PostJob /> },
@@ -53,7 +55,7 @@ const router = createBrowserRouter([
 ]);
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="trackhire-theme">
       <Suspense
         fallback={<BarLoader className="mb-4" width={"100%"} color="#85D055" />}
       >

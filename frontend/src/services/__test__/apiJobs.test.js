@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getJobs } from "../apiJobs";
+import { getAtsScore, getJobPage, getJobs } from "../apiJobs";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -35,5 +35,23 @@ describe("job listing API adapter", () => {
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toContain("page_size=100");
+  });
+
+  it("passes location and side filters to the paginated jobs endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [], total_pages: 0 }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    await getJobPage({ location: "Pune", work_mode: "hybrid", employment_type: "full_time", experience_level: "mid" });
+    const url = fetchMock.mock.calls[0][0];
+    expect(url).toContain("location=Pune");
+    expect(url).toContain("work_mode=hybrid");
+    expect(url).toContain("employment_type=full_time");
+    expect(url).toContain("experience_level=mid");
+  });
+
+  it("requests an authenticated ATS score for a job", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ score: 82 }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(getAtsScore({ job_id: "job-42" })).resolves.toEqual({ score: 82 });
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/jobs/job-42/ats-score");
   });
 });

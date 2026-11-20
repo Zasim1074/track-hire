@@ -14,6 +14,7 @@ export const getJobPage = ({
   page = 1,
   page_size = 20,
   searchQuery = "",
+  location = "",
   work_mode,
   employment_type,
   experience_level,
@@ -23,11 +24,14 @@ export const getJobPage = ({
     page_size: String(page_size),
   });
   if (searchQuery) params.set("search", searchQuery);
+  if (location) params.set("location", location);
   if (work_mode) params.set("work_mode", work_mode);
   if (employment_type) params.set("employment_type", employment_type);
   if (experience_level) params.set("experience_level", experience_level);
   return apiRequest(`/api/jobs?${params}`);
 };
+export const getAtsScore = ({ job_id }) =>
+  apiRequest(`/api/jobs/${job_id}/ats-score`, { auth: true });
 export const getHiringStatus = ({ job_id, isOpen }) =>
   apiRequest(`/api/jobs/${job_id}/${isOpen ? "publish" : "close"}`, {
     method: "POST",

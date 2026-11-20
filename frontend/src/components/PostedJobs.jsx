@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useFetch } from "@/services/useFetch";
 import { BarLoader } from "react-spinners";
 import Jobcard from "./Jobcard";
+import EmptyState from "./EmptyState";
 
 const PostedJobs = () => {
   const {
@@ -37,7 +38,7 @@ const PostedJobs = () => {
             );
           })
         ) : (
-          <div>No Posted Jobs Found 👀</div>
+          <EmptyState title="No jobs posted yet" description="Create a draft to start building your hiring pipeline." actionLabel="Post your first job" actionTo="/post-job" />
         )}
       </div>
     </div>

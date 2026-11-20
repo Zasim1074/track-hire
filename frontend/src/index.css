@@ -4,57 +4,65 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Primitives */
+    --violet-50: 270 100% 98%;
+    --violet-100: 269 100% 95%;
+    --violet-600: 262 83% 58%;
+    --violet-700: 263 70% 50%;
+    --emerald-600: 142 72% 35%;
+    --slate-950: 222 47% 11%;
+
+    /* Semantic tokens */
+    --background: var(--violet-50);
+    --foreground: var(--slate-950);
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: var(--slate-950);
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: var(--slate-950);
+    --primary: var(--violet-600);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--violet-100);
+    --secondary-foreground: 263 70% 32%;
+    --muted: 260 30% 96%;
+    --muted-foreground: 220 15% 40%;
+    --accent: 152 68% 94%;
+    --accent-foreground: 155 70% 22%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --destructive-foreground: 0 0% 100%;
+    --border: 264 45% 89%;
+    --input: 264 35% 86%;
+    --ring: var(--violet-600);
+    --success: var(--emerald-600);
+    --warning: 35 92% 50%;
+    --info: 199 89% 48%;
+
+    /* Component tokens */
+    --card-shadow: 262 83% 58%;
+    --radius: 1rem;
+    --motion-fast: 160ms;
+    --motion-normal: 240ms;
   }
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 260 35% 8%;
+    --foreground: 260 30% 96%;
+    --card: 258 28% 12%;
+    --card-foreground: 260 30% 96%;
+    --popover: 258 28% 12%;
+    --popover-foreground: 260 30% 96%;
+    --primary: 258 90% 72%;
+    --primary-foreground: 260 40% 10%;
+    --secondary: 258 30% 20%;
+    --secondary-foreground: 260 40% 92%;
+    --muted: 258 24% 17%;
+    --muted-foreground: 260 16% 70%;
+    --accent: 155 35% 18%;
+    --accent-foreground: 150 55% 78%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 258 22% 24%;
+    --input: 258 22% 27%;
+    --ring: 258 90% 72%;
+    --success: 142 70% 55%;
   }
 }
 
@@ -63,18 +71,30 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Work Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-width: 320px;
   }
+  ::selection { @apply bg-primary/20 text-foreground; }
 }
 
 @layer utilities {
-  .gradient {
-    @apply bg-gradient-to-br from-gray-500 via-gray-200 to-white;
-  }
-
   .gradient-title {
-    @apply gradient text-transparent bg-clip-text;
+    @apply bg-gradient-to-r from-primary via-violet-500 to-fuchsia-500 bg-clip-text text-transparent;
   }
+  .brand-panel {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(281 83% 55%));
+  }
+  .color-wash {
+    background-image:
+      radial-gradient(circle at 12% 12%, hsl(var(--primary) / 0.12), transparent 28rem),
+      radial-gradient(circle at 88% 20%, hsl(var(--info) / 0.10), transparent 25rem),
+      radial-gradient(circle at 65% 90%, hsl(var(--success) / 0.08), transparent 25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
 .wmde-markdown ul {
