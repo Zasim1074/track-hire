@@ -17,17 +17,19 @@ const ResumesPage = lazy(() => import("./pages/ResumesPage"));
 const RoleHome = lazy(() => import("./pages/RoleHome"));
 const ForbiddenPage = lazy(() => import("./pages/ForbiddenPage"));
 const AccountSettings = lazy(() => import("./pages/AccountSettings"));
+const CompaniesPage = lazy(() => import("./pages/CompaniesPage"));
 
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
-    errorElement: <div className="flex justify-center items-center w-full h-[100vh] text-3xl">Something went wrong 🥺</div>,
+    errorElement: <div role="alert" className="flex min-h-dvh items-center justify-center p-6 text-center"><div><h1 className="text-2xl font-bold">Something went wrong</h1><p className="mt-2 text-muted-foreground">Refresh the page or return to TrackHire and try again.</p></div></div>,
     children: [
       // Public Routes
       { path: "/", element: <LandingPage /> },
       { path: "/jobs", element: <JobListing /> },
       { path: "/login", element: <AuthPage mode="login" /> },
       { path: "/register", element: <AuthPage mode="register" /> },
+      { path: "/jobs/:id", element: <Job /> },
       { path: "/unauthorized", element: <ForbiddenPage /> },
 
       // Protected Routes
@@ -36,10 +38,12 @@ const router = createBrowserRouter([
         children: [
           { path: "/dashboard", element: <RoleHome /> },
           { path: "/settings", element: <AccountSettings /> },
-          { path: "/jobs/:id", element: <Job /> },
           { element: <ProtectedRoute allowedRoles={["hr", "admin"]} />, children: [
             { path: "/post-job", element: <PostJob /> },
             { path: "/my-jobs", element: <MyJobs /> },
+          ] },
+          { element: <ProtectedRoute allowedRoles={["admin"]} />, children: [
+            { path: "/companies", element: <CompaniesPage /> },
           ] },
           { element: <ProtectedRoute allowedRoles={["candidate"]} />, children: [
             { path: "/saved-jobs", element: <SavedJobs /> },
@@ -57,7 +61,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="trackhire-theme">
       <Suspense
-        fallback={<BarLoader className="mb-4" width={"100%"} color="#85D055" />}
+        fallback={<BarLoader className="mb-4" width={"100%"} color="#356AE6" />}
       >
         <RouterProvider router={router} />
       </Suspense>

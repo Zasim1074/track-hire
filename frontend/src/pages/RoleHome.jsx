@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 import { BriefcaseBusiness, Plus, Radio } from "lucide-react";
+import CandidateDashboard from "@/components/CandidateDashboard";
+import AdminDashboard from "@/components/AdminDashboard";
 
 export default function RoleHome() {
   const { user } = useAuth();
@@ -33,8 +35,8 @@ export default function RoleHome() {
     return () => { active = false; };
   }, [user?.role, retry]);
 
-  if (user?.role === "candidate") return <Navigate to="/my-applications" replace />;
-  if (user?.role === "admin") return <Navigate to="/my-jobs" replace />;
+  if (user?.role === "candidate") return <CandidateDashboard />;
+  if (user?.role === "admin") return <AdminDashboard />;
   if (user?.role !== "hr") return <Navigate to="/unauthorized" replace />;
   if (loading) return <BarLoader className="mb-4" width="100%" color="#85D055" />;
   if (error) return <div role="alert" className="rounded-lg border p-6"><p className="text-red-500">Unable to load your recruiter dashboard: {error}</p><Button className="mt-3" variant="outline" onClick={() => { setError(""); setLoading(true); setRetry((value) => value + 1); }}>Try again</Button></div>;

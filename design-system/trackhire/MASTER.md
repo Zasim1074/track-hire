@@ -8,8 +8,8 @@
 
 **Project:** TrackHire
 **Generated:** 2026-11-20 07:46:21
-**Category:** Marketplace (P2P)
-**Design Dials:** Variance 7/10 (Balanced / Modern) | Motion 4/10 (Standard) | Density 7/10 (Standard)
+**Category:** Enterprise recruitment SaaS / ATS
+**Design Dials:** Variance 4/10 (Structured / Modern) | Motion 2/10 (Subtle) | Density 7/10 (Information-dense)
 
 ---
 
@@ -19,30 +19,30 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#7C3AED` | `--color-primary` |
+| Primary | `#172B4D` | `--color-primary` |
 | On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#A78BFA` | `--color-secondary` |
+| Secondary | `#223C63` | `--color-secondary` |
 | On Secondary | `#0F172A` | `--color-on-secondary` |
-| Accent/CTA | `#16A34A` | `--color-accent` |
+| Accent/CTA | `#356AE6` | `--color-accent` |
 | On Accent/CTA | `#000000` | `--color-on-accent` |
-| Background | `#FAF5FF` | `--color-background` |
-| Foreground | `#4C1D95` | `--color-foreground` |
+| Background | `#F7F8FA` | `--color-background` |
+| Foreground | `#172033` | `--color-foreground` |
 | Card | `#FFFFFF` | `--color-card` |
-| Card Foreground | `#4C1D95` | `--color-card-foreground` |
+| Card Foreground | `#172033` | `--color-card-foreground` |
 | Muted | `#ECEEF9` | `--color-muted` |
 | Muted Foreground | `#475569` | `--color-muted-foreground` |
-| Border | `#DDD6FE` | `--color-border` |
+| Border | `#E5E9F0` | `--color-border` |
 | Destructive | `#DC2626` | `--color-destructive` |
 | On Destructive | `#FFFFFF` | `--color-on-destructive` |
-| Ring | `#7C3AED` | `--color-ring` |
+| Ring | `#356AE6` | `--color-ring` |
 
-**Color Notes:** Trust purple + transaction green [Accent adjusted from #22C55E]
+**Color Notes:** Dark navy establishes enterprise trust; blue is reserved for actions and focus. Status colors remain muted and semantic.
 
 ### Typography
 
-- **Heading Font:** Outfit
-- **Body Font:** Work Sans
-- **Mood:** geometric, modern, clean, balanced, contemporary, versatile
+- **Heading Font:** Inter
+- **Body Font:** Inter
+- **Mood:** professional, calm, legible, structured, enterprise
 - **Google Fonts:** [Outfit + Work Sans](https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap)
 
 **CSS Import:**
@@ -167,13 +167,13 @@
 
 ## Style Guidelines
 
-**Style:** Vibrant & Block-based
+**Style:** Enterprise light / information-first
 
-**Keywords:** Bold, energetic, playful, block layout, geometric shapes, high color contrast, duotone, modern, energetic
+**Keywords:** Clear, trustworthy, structured, modern, restrained, information-dense
 
-**Best For:** Startups, creative agencies, gaming, social media, youth-focused, entertainment, consumer
+**Best For:** Recruitment operations, applicant tracking, candidate self-service, administration
 
-**Key Effects:** Large sections (48px+ gaps), animated patterns, bold hover (color shift), scroll-snap, large type (32px+), 200-300ms
+**Key Effects:** Subtle borders, restrained elevation, consistent 8px rhythm, compact tables, 140-220ms state transitions
 
 ### Page Pattern
 
